@@ -88,7 +88,6 @@ body {
 
 [data-theme="light"] .brand-logo-light {
   display: block;
-  filter: invert(1);
 }
 
 [data-theme="light"] > .absolute {
