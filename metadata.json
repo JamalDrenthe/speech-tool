@@ -1,0 +1,7 @@
+{
+  "name": "Speech Tool",
+  "description": "Advanced voice synthesis platform for high-fidelity audio generation, multi-character dialogue, and media transcription.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

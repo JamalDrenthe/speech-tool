@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speech Tool - Advanced Voice Synthesis</title>
+    <meta name="description" content="Speech Tool - Advanced voice synthesis platform for high-fidelity audio generation, multi-character dialogue, and media transcription." />
+    <meta name="keywords" content="voice synthesis, TTS, text to speech, audio generation, AI voice, dialogue, transcription" />
+    <meta name="author" content="Speech Tool" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://speech-tool.com/" />
+    <meta property="og:title" content="Speech Tool - Advanced Voice Synthesis" />
+    <meta property="og:description" content="Advanced voice synthesis platform for high-fidelity audio generation, multi-character dialogue, and media transcription." />
+    <meta property="og:image" content="/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://speech-tool.com/" />
+    <meta property="twitter:title" content="Speech Tool - Advanced Voice Synthesis" />
+    <meta property="twitter:description" content="Advanced voice synthesis platform for high-fidelity audio generation, multi-character dialogue, and media transcription." />
+    <meta property="twitter:image" content="/og-image.jpg" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <script src="https://cdn.tailwindcss.com"></meta>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+      
+      :root {
+        --palette-grey-0: #FFFFFF;
+        --palette-grey-1200: #121317;
+        --palette-grey-1100: #18191D;
+        --palette-grey-1000: #212226;
+        --theme-surface-on-surface: #E6EAF0;
+        --theme-surface-on-surface-variant: #B7BFD9;
+        --theme-outline-variant: rgba(230, 234, 240, 0.06);
+        --theme-primary: #3186FF;
+      }
+
+      body {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--palette-grey-1200);
+        color: var(--theme-surface-on-surface);
+        margin: 0;
+        min-height: 100vh;
+        overscroll-behavior-y: contain;
+      }
+      
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Space Grotesk', sans-serif;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #45474D; 
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #B2BBC5; 
+      }
+
+      /* Houdini PaintWorklet Definitions */
+      @property --animation-tick { syntax: '<number>'; inherits: false; initial-value: 0; }
+      @property --ring-radius { syntax: '<number> | auto'; inherits: false; initial-value: auto; }
+      @property --ring-x { syntax: '<number>'; inherits: false; initial-value: 50; }
+      @property --ring-y { syntax: '<number>'; inherits: false; initial-value: 50; }
+      @property --ring-interactive { syntax: '<number>'; inherits: false; initial-value: 0; }
+
+      @keyframes ripple { 0% { --animation-tick: 0; } 100% { --animation-tick: 1; } }
+      @keyframes ring { 0% { --ring-radius: 150; } 100% { --ring-radius: 250; } }
+
+      /* Typewriter Effect */
+      @keyframes blink { from { opacity: 0; } }
+      @keyframes text { from { background-size: 0 } }
+      
+      .typewriter {
+        background: 
+          linear-gradient(90deg, var(--theme-surface-on-surface) 0 0) 0 / calc(var(--n, 100) * 1ch) no-repeat 
+          transparent;
+        -webkit-background-clip: text;
+        color: transparent;
+        animation: text 2s ease-in both;
+      }
+      .typewriter::after {
+        content: "|";
+        background: linear-gradient(#ff4700, #0ff);
+        -webkit-background-clip: text;
+        color: transparent;
+        animation: blink 0.2s 1.4s ease infinite alternate both;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.42.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.575.0",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/styles.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

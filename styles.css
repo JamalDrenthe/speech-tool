@@ -1,0 +1,131 @@
+/* Interactive Background Styles */
+#welcome {
+  min-height: 100vh;
+  color: #E6EAF0;
+  padding-bottom: 80px;
+  position: relative;
+}
+
+/* Fallback animated background for browsers without CSS Houdini support */
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%, 100% 50%, 50% 50%, 0% 0%; }
+  25% { background-position: 100% 50%, 0% 50%, 30% 50%, 0% 0%; }
+  50% { background-position: 50% 50%, 50% 50%, 80% 50%, 0% 0%; }
+  75% { background-position: 0% 50%, 100% 50%, 20% 50%, 0% 0%; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.fallback-background {
+  background: radial-gradient(circle at 20% 50%, rgba(49, 134, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 50%, rgba(49, 134, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 50% 50%, rgba(49, 134, 255, 0.05) 0%, transparent 70%),
+              linear-gradient(135deg, #121317 0%, #18191D 100%);
+  background-size: 200% 200%, 200% 200%, 150% 150%, 100% 100%;
+  background-position: 0% 50%, 100% 50%, 50% 50%, 0% 0%;
+  animation: gradientShift 15s ease-in-out infinite, pulse 4s ease-in-out infinite;
+}
+
+/* Houdini PaintWorklet support */
+@supports (background: paint(ring-particles)) {
+  #welcome.houdini-background {
+    background-image: paint(ring-particles);
+    animation: ripple 8s linear infinite, ring 8s ease-in-out infinite alternate;
+    transition: --ring-x 1.5s ease-out, --ring-y 1.5s ease-out;
+  }
+}
+
+/* Audio Analysis Styles */
+.audio-analysis {
+  background: #212226;
+  padding: 12px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.analysis-label {
+  font-size: 10px;
+  color: #B7BFD9;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.analysis-value {
+  color: white;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-weight: 500;
+}
+
+.analysis-unit {
+  font-size: 10px;
+  color: #45474D;
+}
+
+/* Button Styles */
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 9999px;
+  background-color: #E6EAF0;
+  color: #121317;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+  background-color: white;
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+}
+
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 9999px;
+  background-color: rgba(230, 234, 240, 0.06);
+  color: #E6EAF0;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: 1px solid rgba(230, 234, 240, 0.06);
+}
+
+.btn-secondary:hover {
+  background-color: #2F3034;
+}
+
+.btn-secondary:active {
+  transform: scale(0.95);
+}
+
+.btn-ghost {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 9999px;
+  background-color: rgba(230, 234, 240, 0.03);
+  color: #B7BFD9;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.btn-ghost:hover {
+  color: white;
+  background-color: rgba(230, 234, 240, 0.08);
+}
