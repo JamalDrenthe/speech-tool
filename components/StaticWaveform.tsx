@@ -55,22 +55,22 @@ const StaticWaveform: React.FC<StaticWaveformProps> = ({ buffer, currentTime }) 
 
       // Gradient for active vs inactive bars
       if (i <= activeBarIndex) {
-        // Active color (Indigo gradient)
+        // Active color (warm signal gradient)
         const gradient = ctx.createLinearGradient(0, y, 0, y + barHeight);
-        gradient.addColorStop(0, '#818cf8'); // indigo-400
-        gradient.addColorStop(1, '#4f46e5'); // indigo-600
+        gradient.addColorStop(0, '#69d9d0');
+        gradient.addColorStop(1, '#f5a623');
         ctx.fillStyle = gradient;
         
         // Add a slight glow effect to the playhead
         if (i === activeBarIndex) {
-          ctx.shadowColor = '#6366f1';
+          ctx.shadowColor = '#f5a623';
           ctx.shadowBlur = 10;
         } else {
           ctx.shadowBlur = 0;
         }
       } else {
-        // Inactive color (Slate)
-        ctx.fillStyle = '#475569';
+        // Inactive color
+        ctx.fillStyle = '#3a3e47';
         ctx.shadowBlur = 0;
       }
       
@@ -82,8 +82,8 @@ const StaticWaveform: React.FC<StaticWaveformProps> = ({ buffer, currentTime }) 
   }, [buffer, currentTime]);
 
   return (
-    <div className="relative w-full h-32 rounded-xl bg-slate-900 shadow-inner border border-slate-700/50 overflow-hidden flex items-center justify-center">
-      {!buffer && <span className="text-slate-600 text-sm">No Audio Generated</span>}
+    <div className="relative w-full h-32 rounded-xl bg-[#090a0c] shadow-inner border border-white/[0.08] overflow-hidden flex items-center justify-center">
+      {!buffer && <span className="text-[#6d717b] text-sm">No audio generated</span>}
       <canvas
         ref={canvasRef}
         width={800}

@@ -1,9 +1,37 @@
+:root {
+  --ink-950: #090a0c;
+  --ink-900: #101114;
+  --ink-850: #15171b;
+  --ink-800: #1d2025;
+  --ink-700: #2a2e35;
+  --text-primary: #f4f1ea;
+  --text-muted: #9b9da5;
+  --signal: #f5a623;
+  --signal-soft: rgba(245, 166, 35, 0.14);
+  --wave: #69d9d0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  color: var(--ink-950);
+  background: var(--signal);
+}
+
+body {
+  background: var(--ink-950);
+  color: var(--text-primary);
+}
+
 /* Interactive Background Styles */
 #welcome {
   min-height: 100vh;
-  color: #E6EAF0;
+  color: var(--text-primary);
   padding-bottom: 80px;
   position: relative;
+  isolation: isolate;
 }
 
 /* Fallback animated background for browsers without CSS Houdini support */
@@ -20,10 +48,10 @@
 }
 
 .fallback-background {
-  background: radial-gradient(circle at 20% 50%, rgba(49, 134, 255, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 50%, rgba(49, 134, 255, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 50% 50%, rgba(49, 134, 255, 0.05) 0%, transparent 70%),
-              linear-gradient(135deg, #121317 0%, #18191D 100%);
+  background: radial-gradient(circle at 16% 24%, rgba(245, 166, 35, 0.12) 0%, transparent 32%),
+              radial-gradient(circle at 82% 28%, rgba(105, 217, 208, 0.1) 0%, transparent 34%),
+              radial-gradient(circle at 50% 100%, rgba(88, 76, 142, 0.12) 0%, transparent 45%),
+              linear-gradient(135deg, var(--ink-950) 0%, var(--ink-900) 100%);
   background-size: 200% 200%, 200% 200%, 150% 150%, 100% 100%;
   background-position: 0% 50%, 100% 50%, 50% 50%, 0% 0%;
   animation: gradientShift 15s ease-in-out infinite, pulse 4s ease-in-out infinite;
@@ -40,29 +68,30 @@
 
 /* Audio Analysis Styles */
 .audio-analysis {
-  background: #212226;
+  background: var(--ink-850);
   padding: 12px;
-  border-radius: 16px;
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .analysis-label {
   font-size: 10px;
-  color: #B7BFD9;
+  color: var(--text-muted);
   text-transform: uppercase;
   margin-bottom: 4px;
 }
 
 .analysis-value {
-  color: white;
+  color: var(--text-primary);
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
   font-weight: 500;
 }
 
 .analysis-unit {
   font-size: 10px;
-  color: #45474D;
+  color: #6d717b;
 }
 
 /* Button Styles */
@@ -72,16 +101,17 @@
   justify-content: center;
   gap: 8px;
   padding: 12px 16px;
-  border-radius: 9999px;
-  background-color: #E6EAF0;
-  color: #121317;
+  border-radius: 10px;
+  background-color: var(--signal);
+  color: var(--ink-950);
   font-weight: 600;
   transition: all 0.2s;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px -12px rgba(245, 166, 35, 0.8);
 }
 
 .btn-primary:hover {
-  background-color: white;
+  background-color: #ffc45a;
+  box-shadow: 0 12px 34px -12px rgba(245, 166, 35, 0.95);
 }
 
 .btn-primary:active {
@@ -94,16 +124,16 @@
   justify-content: center;
   gap: 8px;
   padding: 12px 16px;
-  border-radius: 9999px;
-  background-color: rgba(230, 234, 240, 0.06);
-  color: #E6EAF0;
+  border-radius: 10px;
+  background-color: var(--ink-800);
+  color: var(--text-primary);
   font-weight: 500;
   transition: all 0.2s;
   border: 1px solid rgba(230, 234, 240, 0.06);
 }
 
 .btn-secondary:hover {
-  background-color: #2F3034;
+  background-color: #343840;
 }
 
 .btn-secondary:active {
@@ -117,9 +147,9 @@
   justify-content: center;
   gap: 8px;
   padding: 12px;
-  border-radius: 9999px;
-  background-color: rgba(230, 234, 240, 0.03);
-  color: #B7BFD9;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
   font-size: 14px;
   font-weight: 500;
   transition: color 0.2s, background-color 0.2s;
@@ -127,5 +157,5 @@
 
 .btn-ghost:hover {
   color: white;
-  background-color: rgba(230, 234, 240, 0.08);
+  background-color: rgba(255, 255, 255, 0.09);
 }

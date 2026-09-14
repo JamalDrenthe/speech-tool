@@ -408,14 +408,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
   const activeFileForTranscription = transcribeInputMode === 'upload' ? selectedFile : recordedFile;
 
   return (
-    <div className="bg-[#18191D]/90 border border-[rgba(230,234,240,0.06)] rounded-[2rem] p-8 shadow-2xl backdrop-blur-xl relative">
+    <div className="bg-[#101114]/90 border border-white/[0.08] rounded-2xl p-5 md:p-7 shadow-[0_24px_80px_rgba(0,0,0,0.3)] backdrop-blur-xl relative">
       
       {/* Mode Toggle */}
-      <div className="flex p-1.5 bg-[#121317] border border-[rgba(230,234,240,0.03)] rounded-full w-full max-w-2xl mb-8 mx-auto shadow-inner">
+      <div className="flex p-1 bg-[#090a0c] border border-white/[0.08] rounded-xl w-full max-w-2xl mb-8 mx-auto shadow-inner">
         <button
           onClick={() => setMode('single')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
-            mode === 'single' ? 'bg-[#E6EAF0] text-[#121317] shadow-md' : 'text-[#B7BFD9] hover:text-white hover:bg-[rgba(230,234,240,0.06)]'
+            mode === 'single' ? 'bg-[#f5a623] text-[#090a0c] shadow-[0_8px_24px_rgba(245,166,35,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <User className="w-4 h-4" />
@@ -424,7 +424,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
         <button
           onClick={() => setMode('dialogue')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
-            mode === 'dialogue' ? 'bg-[#E6EAF0] text-[#121317] shadow-md' : 'text-[#B7BFD9] hover:text-white hover:bg-[rgba(230,234,240,0.06)]'
+            mode === 'dialogue' ? 'bg-[#f5a623] text-[#090a0c] shadow-[0_8px_24px_rgba(245,166,35,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <MessageSquare className="w-4 h-4" />
@@ -433,7 +433,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
         <button
           onClick={() => setMode('transcribe')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
-            mode === 'transcribe' ? 'bg-[#E6EAF0] text-[#121317] shadow-md' : 'text-[#B7BFD9] hover:text-white hover:bg-[rgba(230,234,240,0.06)]'
+            mode === 'transcribe' ? 'bg-[#f5a623] text-[#090a0c] shadow-[0_8px_24px_rgba(245,166,35,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <FileText className="w-4 h-4" />
@@ -442,7 +442,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
         <button
           onClick={() => setMode('batch')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
-            mode === 'batch' ? 'bg-[#E6EAF0] text-[#121317] shadow-md' : 'text-[#B7BFD9] hover:text-white hover:bg-[rgba(230,234,240,0.06)]'
+            mode === 'batch' ? 'bg-[#f5a623] text-[#090a0c] shadow-[0_8px_24px_rgba(245,166,35,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <ListOrdered className="w-4 h-4" />
