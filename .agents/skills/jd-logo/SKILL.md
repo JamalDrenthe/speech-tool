@@ -52,7 +52,7 @@ ImageMagick example:
 convert source.png -fuzz 10% -transparent black -trim +repage \
   -resize 256x162 -gravity center -background none -extent 256x162 \
   jdlogo-dark-transparent.png
-convert jdlogo-mark.png -alpha extract /tmp/jdlogo-mask.png
+convert jdlogo-dark-transparent.png -alpha extract /tmp/jdlogo-mask.png
 convert -size 256x162 xc:'#17202b' /tmp/jdlogo-mask.png \
   -alpha off -compose CopyOpacity -composite jdlogo-mark-light.png
 ```
