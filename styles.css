@@ -73,12 +73,21 @@ body {
   border-color: rgba(255, 255, 255, 0.18);
 }
 
+.brand-logo-light {
+  display: none;
+}
+
 [data-theme="light"] .brand-mark {
   background: #ffffff !important;
   border-color: rgba(23, 32, 43, 0.18);
 }
 
-[data-theme="light"] .brand-logo {
+[data-theme="light"] .brand-logo-dark {
+  display: none;
+}
+
+[data-theme="light"] .brand-logo-light {
+  display: block;
   filter: invert(1);
 }
 
