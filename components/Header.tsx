@@ -1,6 +1,12 @@
 import React from 'react';
+import { Moon, Sun } from 'lucide-react';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
   return (
     <header className="py-5 fixed top-0 left-0 right-0 z-50">
       <div className="mx-auto max-w-7xl px-5 md:px-10 flex items-center justify-between">
@@ -23,9 +29,19 @@ const Header: React.FC = () => {
            </span>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 text-xs text-[#8e929c]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#63d7a4]" />
-          Ready
+        <div className="flex items-center gap-3 text-xs text-[#8e929c]">
+          <span className="hidden sm:inline-flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#63d7a4]" />
+            Ready
+          </span>
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            className="glass-control flex h-9 w-9 items-center justify-center rounded-lg"
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </div>
       </div>
     </header>

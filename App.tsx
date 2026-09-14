@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ControlPanel from './components/ControlPanel';
+import Header from './components/Header';
 import StaticWaveform from './components/StaticWaveform';
 import { generateSpeech, generateDialogue, transcribeMedia } from './services/geminiService';
 import { decodeBase64, decodeAudioData, bufferToWav, analyzeAudioBuffer } from './utils/audioUtils';
@@ -7,6 +8,9 @@ import { VoicePersona, AudioState, DialogueTurn, BatchItem } from './types';
 import { Download, Play, Pause, RotateCcw, Volume2, AlertCircle } from 'lucide-react';
 
 const App: React.FC = () => {
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => (
+    localStorage.getItem('speech-tool-theme') === 'light' ? 'light' : 'dark'
+  ));
   const [audioState, setAudioState] = useState<AudioState>({
     buffer: null,
     isPlaying: false,
@@ -345,11 +349,20 @@ const App: React.FC = () => {
     return `${min}:${sec.toString().padStart(2, '0')}`;
   };
 
+  const toggleTheme = () => {
+    setTheme(current => {
+      const next = current === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('speech-tool-theme', next);
+      return next;
+    });
+  };
+
   return (
-    <div ref={welcomeRef} id="welcome" className="min-h-screen text-[#E6EAF0] pb-20 relative">
+    <div ref={welcomeRef} id="welcome" data-theme={theme} className="min-h-screen text-[#E6EAF0] pb-20 relative">
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#101114]/35 to-[#090a0c]/95 pointer-events-none"></div>
       
       <div className="relative z-10">
+        <Header theme={theme} onToggleTheme={toggleTheme} />
         <section className="flex flex-col items-center justify-center pt-36 pb-16 px-4 text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#a8abb3] backdrop-blur-md">
             <span className="h-1.5 w-1.5 rounded-full bg-[#5b9cff]" />
