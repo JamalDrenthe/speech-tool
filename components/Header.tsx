@@ -12,7 +12,7 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
       <div className="mx-auto max-w-7xl px-5 md:px-10 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="brand-mark flex items-center justify-center w-9 h-9 rounded-lg bg-white/95 border border-white/20">
-            <img src="/jdlogo.png" alt="Jamal Drenthe" className="h-6 w-auto object-contain" />
+            <img src="/jdlogo-mark.png" alt="Jamal Drenthe" className="brand-logo h-6 w-auto object-contain" />
           </div>
           <div className="hidden sm:block">
             <p className="text-[10px] uppercase tracking-[0.28em] text-[#8e929c]">Jamal Drenthe</p>
