@@ -415,7 +415,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
         <button
           onClick={() => setMode('single')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
-            mode === 'single' ? 'bg-[#f5a623] text-[#090a0c] shadow-[0_8px_24px_rgba(245,166,35,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
+            mode === 'single' ? 'bg-[#5b9cff] text-[#090a0c] shadow-[0_8px_24px_rgba(91,156,255,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <User className="w-4 h-4" />
@@ -424,7 +424,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
         <button
           onClick={() => setMode('dialogue')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
-            mode === 'dialogue' ? 'bg-[#f5a623] text-[#090a0c] shadow-[0_8px_24px_rgba(245,166,35,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
+            mode === 'dialogue' ? 'bg-[#5b9cff] text-[#090a0c] shadow-[0_8px_24px_rgba(91,156,255,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <MessageSquare className="w-4 h-4" />
@@ -433,7 +433,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
         <button
           onClick={() => setMode('transcribe')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
-            mode === 'transcribe' ? 'bg-[#f5a623] text-[#090a0c] shadow-[0_8px_24px_rgba(245,166,35,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
+            mode === 'transcribe' ? 'bg-[#5b9cff] text-[#090a0c] shadow-[0_8px_24px_rgba(91,156,255,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <FileText className="w-4 h-4" />
@@ -442,7 +442,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
         <button
           onClick={() => setMode('batch')}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 ${
-            mode === 'batch' ? 'bg-[#f5a623] text-[#090a0c] shadow-[0_8px_24px_rgba(245,166,35,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
+            mode === 'batch' ? 'bg-[#5b9cff] text-[#090a0c] shadow-[0_8px_24px_rgba(91,156,255,0.2)]' : 'text-[#9b9da5] hover:text-white hover:bg-white/[0.06]'
           }`}
         >
           <ListOrdered className="w-4 h-4" />

@@ -61,14 +61,12 @@ const App: React.FC = () => {
     if (!supportsPaintWorklet) {
       // Fallback: Add CSS-based animated background
       $welcome.style.background = `
-        radial-gradient(circle at 20% 50%, rgba(49, 134, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 50%, rgba(49, 134, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(49, 134, 255, 0.05) 0%, transparent 70%),
-        linear-gradient(135deg, #121317 0%, #18191D 100%)
+        radial-gradient(circle at 50% 0%, rgba(91, 156, 255, 0.08) 0%, transparent 38%),
+        linear-gradient(135deg, #090a0c 0%, #101114 100%)
       `;
-      $welcome.style.backgroundSize = '200% 200%, 200% 200%, 150% 150%, 100% 100%';
-      $welcome.style.backgroundPosition = '0% 50%, 100% 50%, 50% 50%, 0% 0%';
-      $welcome.style.animation = 'gradientShift 15s ease-in-out infinite, pulse 4s ease-in-out infinite';
+      $welcome.style.backgroundSize = '140% 140%, 100% 100%';
+      $welcome.style.backgroundPosition = '50% 0%, 0% 0%';
+      $welcome.style.animation = 'gradientShift 20s ease-in-out infinite';
       
       // Add fallback animation keyframes if not already added
       if (!document.getElementById('fallback-animations')) {
@@ -94,14 +92,14 @@ const App: React.FC = () => {
       let isInteractive = false;
       
       // Apply initial styles for the worklet - Made more visible!
-      $welcome.style.setProperty('--ring-radius', '120');
-      $welcome.style.setProperty('--ring-thickness', '800');
-      $welcome.style.setProperty('--particle-count', '200'); // Increased count
-      $welcome.style.setProperty('--particle-rows', '25'); // Increased rows
-      $welcome.style.setProperty('--particle-size', '3'); // Increased size
-      $welcome.style.setProperty('--particle-color', '#3186FF'); // Brighter primary blue
-      $welcome.style.setProperty('--particle-min-alpha', '0.2'); // Increased min opacity
-      $welcome.style.setProperty('--particle-max-alpha', '1.0'); // Increased max opacity
+      $welcome.style.setProperty('--ring-radius', '160');
+      $welcome.style.setProperty('--ring-thickness', '600');
+      $welcome.style.setProperty('--particle-count', '90');
+      $welcome.style.setProperty('--particle-rows', '14');
+      $welcome.style.setProperty('--particle-size', '2');
+      $welcome.style.setProperty('--particle-color', '#5B9CFF');
+      $welcome.style.setProperty('--particle-min-alpha', '0.08');
+      $welcome.style.setProperty('--particle-max-alpha', '0.35');
       $welcome.style.setProperty('--seed', '42');
       
       // Add animations via inline style to ensure they apply
@@ -349,25 +347,24 @@ const App: React.FC = () => {
 
   return (
     <div ref={welcomeRef} id="welcome" className="min-h-screen text-[#E6EAF0] pb-20 relative">
-      {/* Less obscuring overlay so the particles pop more */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#121317]/20 to-[#121317]/90 pointer-events-none"></div>
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#101114]/35 to-[#090a0c]/95 pointer-events-none"></div>
       
       <div className="relative z-10">
         <section className="flex flex-col items-center justify-center pt-36 pb-16 px-4 text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#a8abb3] backdrop-blur-md">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#f5a623] shadow-[0_0_12px_rgba(245,166,35,0.9)]" />
-            Audio intelligence workspace
+          <div className="mb-6 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#a8abb3] backdrop-blur-md">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5b9cff]" />
+            Voice production workspace
           </div>
-          <h2 className="max-w-4xl text-5xl md:text-7xl font-semibold mb-6 tracking-[-0.05em] text-white drop-shadow-lg">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f7d38d] via-[#f5a623] to-[#69d9d0]">Give your words a signal.</span>
-            <span className="text-[0.52em] text-[#a8abb3] font-normal tracking-[-0.02em] mt-4 block">Create voice, dialogue, and audio intelligence in one focused studio.</span>
+          <h2 className="max-w-4xl text-5xl md:text-7xl font-semibold mb-6 tracking-[-0.05em] text-white">
+            <span className="text-white">Professional voice, clearly produced.</span>
+            <span className="text-[0.52em] text-[#a8abb3] font-normal tracking-[-0.02em] mt-4 block">Create speech, dialogue, and transcription from one focused workspace.</span>
           </h2>
           <p className="text-[#9b9da5] max-w-xl mx-auto text-base md:text-lg mb-8 font-light leading-relaxed">
             Generate high-fidelity speech, orchestrate multi-character scenes, or turn media into searchable text.
           </p>
           <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-[#6d717b]">
             <span className="h-px w-8 bg-white/15" />
-            Waveform-ready output
+            Production-ready output
             <span className="h-px w-8 bg-white/15" />
           </div>
         </section>

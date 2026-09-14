@@ -57,13 +57,13 @@ const StaticWaveform: React.FC<StaticWaveformProps> = ({ buffer, currentTime }) 
       if (i <= activeBarIndex) {
         // Active color (warm signal gradient)
         const gradient = ctx.createLinearGradient(0, y, 0, y + barHeight);
-        gradient.addColorStop(0, '#69d9d0');
-        gradient.addColorStop(1, '#f5a623');
+        gradient.addColorStop(0, '#79c7db');
+        gradient.addColorStop(1, '#5b9cff');
         ctx.fillStyle = gradient;
         
         // Add a slight glow effect to the playhead
         if (i === activeBarIndex) {
-          ctx.shadowColor = '#f5a623';
+          ctx.shadowColor = '#5b9cff';
           ctx.shadowBlur = 10;
         } else {
           ctx.shadowBlur = 0;
