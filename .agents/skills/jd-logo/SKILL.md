@@ -41,7 +41,7 @@ Use separate image elements or an equivalent theme-aware source switch:
 
 1. Inspect the source dimensions, alpha channel, and visible bounds.
 2. Remove the background color with a small fuzz tolerance, usually `8–10%`.
-3. Trim transparent padding and resize to `256x162`.
+3. Trim transparent padding, resize proportionally so it fits within `256x162`, then center it on a transparent `256x162` canvas.
 4. For a dark variant, preserve the white mark and make the background transparent.
 5. For a light variant, recolor the opaque mark to `#17202b` while preserving the alpha mask.
 6. Compare both exported files on dark and light page backgrounds at the final rendered size.
@@ -49,8 +49,10 @@ Use separate image elements or an equivalent theme-aware source switch:
 ImageMagick example:
 
 ```bash
-convert source.png -fuzz 10% -transparent black -trim +repage -resize 256x162! jdlogo-dark-transparent.png
-convert jdlogo-mark.png -alpha extract -threshold 50% /tmp/jdlogo-mask.png
+convert source.png -fuzz 10% -transparent black -trim +repage \
+  -resize 256x162 -gravity center -background none -extent 256x162 \
+  jdlogo-dark-transparent.png
+convert jdlogo-mark.png -alpha extract /tmp/jdlogo-mask.png
 convert -size 256x162 xc:'#17202b' /tmp/jdlogo-mask.png \
   -alpha off -compose CopyOpacity -composite jdlogo-mark-light.png
 ```
