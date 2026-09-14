@@ -70,7 +70,7 @@ body {
 
 .brand-mark {
   background: #17202b !important;
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: transparent !important;
 }
 
 .brand-logo-light {
@@ -79,7 +79,7 @@ body {
 
 [data-theme="light"] .brand-mark {
   background: #ffffff !important;
-  border-color: rgba(23, 32, 43, 0.18);
+  border-color: transparent !important;
 }
 
 [data-theme="light"] .brand-logo-dark {
