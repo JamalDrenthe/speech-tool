@@ -51,7 +51,7 @@ body {
   --text-muted: #627083;
   --signal: #2d6cdf;
   --signal-soft: rgba(45, 108, 223, 0.12);
-  background: #eef2f7 !important;
+  background: radial-gradient(circle at 50% -15%, rgba(91, 156, 255, 0.16), transparent 38%), #eef2f7 !important;
   background-image: none !important;
 }
 
@@ -68,13 +68,21 @@ body {
   border-color: rgba(45, 108, 223, 0.3);
 }
 
+[data-theme="light"] .brand-mark {
+  background: #17202b !important;
+  border-color: rgba(23, 32, 43, 0.18);
+}
+
 [data-theme="light"] > .absolute {
   opacity: 0 !important;
 }
 
 [data-theme="light"] [class*="bg-[#101114]"],
 [data-theme="light"] [class*="bg-[#090a0c]"],
-[data-theme="light"] [class*="bg-[#18191D]"] {
+[data-theme="light"] [class*="bg-[#18191D]"],
+[data-theme="light"] [class*="bg-[#121317]"],
+[data-theme="light"] [class*="bg-[#212226]"],
+[data-theme="light"] [class*="bg-[#2F3034]"] {
   background-color: rgba(255, 255, 255, 0.72) !important;
   border-color: rgba(23, 32, 43, 0.12) !important;
   box-shadow: 0 24px 70px rgba(48, 70, 98, 0.1) !important;
@@ -82,15 +90,37 @@ body {
   -webkit-backdrop-filter: blur(22px) saturate(120%);
 }
 
+[data-theme="light"] [class*="bg-[#121317]"],
+[data-theme="light"] [class*="bg-[#212226]"],
+[data-theme="light"] [class*="bg-[#2F3034]"] {
+  box-shadow: none !important;
+  background-color: #f7f9fc !important;
+}
+
+[data-theme="light"] [class*="bg-[#E6EAF0]"] {
+  background-color: #2d6cdf !important;
+  color: #ffffff !important;
+}
+
 [data-theme="light"] [class*="text-white"] {
+  color: #17202b !important;
+}
+
+[data-theme="light"] [class*="text-[#E6EAF0]"],
+[data-theme="light"] [class*="text-[#121317]"] {
   color: #17202b !important;
 }
 
 [data-theme="light"] [class*="text-[#9b9da5]"],
 [data-theme="light"] [class*="text-[#a8abb3]"],
 [data-theme="light"] [class*="text-[#8e929c]"],
-[data-theme="light"] [class*="text-[#B7BFD9]"] {
+[data-theme="light"] [class*="text-[#B7BFD9]"],
+[data-theme="light"] [class*="text-[#45474D]"] {
   color: #627083 !important;
+}
+
+[data-theme="light"] [class*="border-[rgba(230,234,240"] {
+  border-color: rgba(23, 32, 43, 0.12) !important;
 }
 
 [data-theme="light"] [class*="bg-[#5b9cff]"] {

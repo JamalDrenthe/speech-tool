@@ -11,7 +11,7 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
     <header className="py-5 fixed top-0 left-0 right-0 z-50">
       <div className="mx-auto max-w-7xl px-5 md:px-10 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white/95 border border-white/20">
+          <div className="brand-mark flex items-center justify-center w-9 h-9 rounded-lg bg-white/95 border border-white/20">
             <img src="/jdlogo.png" alt="Jamal Drenthe" className="h-6 w-auto object-contain" />
           </div>
           <div className="hidden sm:block">
