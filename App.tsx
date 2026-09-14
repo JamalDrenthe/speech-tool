@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ControlPanel from './components/ControlPanel';
+import Header from './components/Header';
 import StaticWaveform from './components/StaticWaveform';
 import { generateSpeech, generateDialogue, transcribeMedia } from './services/geminiService';
 import { decodeBase64, decodeAudioData, bufferToWav, analyzeAudioBuffer } from './utils/audioUtils';
@@ -7,6 +8,9 @@ import { VoicePersona, AudioState, DialogueTurn, BatchItem } from './types';
 import { Download, Play, Pause, RotateCcw, Volume2, AlertCircle } from 'lucide-react';
 
 const App: React.FC = () => {
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => (
+    localStorage.getItem('speech-tool-theme') === 'light' ? 'light' : 'dark'
+  ));
   const [audioState, setAudioState] = useState<AudioState>({
     buffer: null,
     isPlaying: false,
@@ -61,14 +65,12 @@ const App: React.FC = () => {
     if (!supportsPaintWorklet) {
       // Fallback: Add CSS-based animated background
       $welcome.style.background = `
-        radial-gradient(circle at 20% 50%, rgba(49, 134, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 50%, rgba(49, 134, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(49, 134, 255, 0.05) 0%, transparent 70%),
-        linear-gradient(135deg, #121317 0%, #18191D 100%)
+        radial-gradient(circle at 50% 0%, rgba(91, 156, 255, 0.08) 0%, transparent 38%),
+        linear-gradient(135deg, #090a0c 0%, #101114 100%)
       `;
-      $welcome.style.backgroundSize = '200% 200%, 200% 200%, 150% 150%, 100% 100%';
-      $welcome.style.backgroundPosition = '0% 50%, 100% 50%, 50% 50%, 0% 0%';
-      $welcome.style.animation = 'gradientShift 15s ease-in-out infinite, pulse 4s ease-in-out infinite';
+      $welcome.style.backgroundSize = '140% 140%, 100% 100%';
+      $welcome.style.backgroundPosition = '50% 0%, 0% 0%';
+      $welcome.style.animation = 'gradientShift 20s ease-in-out infinite';
       
       // Add fallback animation keyframes if not already added
       if (!document.getElementById('fallback-animations')) {
@@ -94,14 +96,14 @@ const App: React.FC = () => {
       let isInteractive = false;
       
       // Apply initial styles for the worklet - Made more visible!
-      $welcome.style.setProperty('--ring-radius', '120');
-      $welcome.style.setProperty('--ring-thickness', '800');
-      $welcome.style.setProperty('--particle-count', '200'); // Increased count
-      $welcome.style.setProperty('--particle-rows', '25'); // Increased rows
-      $welcome.style.setProperty('--particle-size', '3'); // Increased size
-      $welcome.style.setProperty('--particle-color', '#3186FF'); // Brighter primary blue
-      $welcome.style.setProperty('--particle-min-alpha', '0.2'); // Increased min opacity
-      $welcome.style.setProperty('--particle-max-alpha', '1.0'); // Increased max opacity
+      $welcome.style.setProperty('--ring-radius', '160');
+      $welcome.style.setProperty('--ring-thickness', '600');
+      $welcome.style.setProperty('--particle-count', '90');
+      $welcome.style.setProperty('--particle-rows', '14');
+      $welcome.style.setProperty('--particle-size', '2');
+      $welcome.style.setProperty('--particle-color', '#5B9CFF');
+      $welcome.style.setProperty('--particle-min-alpha', '0.08');
+      $welcome.style.setProperty('--particle-max-alpha', '0.35');
       $welcome.style.setProperty('--seed', '42');
       
       // Add animations via inline style to ensure they apply
@@ -347,20 +349,37 @@ const App: React.FC = () => {
     return `${min}:${sec.toString().padStart(2, '0')}`;
   };
 
+  const toggleTheme = () => {
+    setTheme(current => {
+      const next = current === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('speech-tool-theme', next);
+      return next;
+    });
+  };
+
   return (
-    <div ref={welcomeRef} id="welcome" className="min-h-screen text-[#E6EAF0] pb-20 relative">
-      {/* Less obscuring overlay so the particles pop more */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#121317]/20 to-[#121317]/90 pointer-events-none"></div>
+    <div ref={welcomeRef} id="welcome" data-theme={theme} className="min-h-screen text-[#E6EAF0] pb-20 relative">
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#101114]/35 to-[#090a0c]/95 pointer-events-none"></div>
       
       <div className="relative z-10">
-        <section className="flex flex-col items-center justify-center pt-32 pb-12 px-4 text-center">
-          <h2 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight text-white drop-shadow-lg">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Speech Tool</span><br/>
-            <span className="text-[0.6em] text-[#B7BFD9] font-normal tracking-normal mt-2 block">Advanced Voice Synthesis</span>
+        <Header theme={theme} onToggleTheme={toggleTheme} />
+        <section className="flex flex-col items-center justify-center pt-36 pb-16 px-4 text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#a8abb3] backdrop-blur-md">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5b9cff]" />
+            Voice production workspace
+          </div>
+          <h2 className="max-w-4xl text-5xl md:text-7xl font-semibold mb-6 tracking-[-0.05em] text-white">
+            <span className="text-white">Professional voice, clearly produced.</span>
+            <span className="text-[0.52em] text-[#a8abb3] font-normal tracking-[-0.02em] mt-4 block">Create speech, dialogue, and transcription from one focused workspace.</span>
           </h2>
-          <p className="text-[#B7BFD9] max-w-2xl mx-auto text-lg mb-8 font-light leading-relaxed">
-            Generate high-fidelity single speaker audio, orchestrate multi-character dialogue scenes, or transcribe media.
+          <p className="text-[#9b9da5] max-w-xl mx-auto text-base md:text-lg mb-8 font-light leading-relaxed">
+            Generate high-fidelity speech, orchestrate multi-character scenes, or turn media into searchable text.
           </p>
+          <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-[#6d717b]">
+            <span className="h-px w-8 bg-white/15" />
+            Production-ready output
+            <span className="h-px w-8 bg-white/15" />
+          </div>
         </section>
 
         <main className="container mx-auto px-4 max-w-5xl">
@@ -384,15 +403,15 @@ const App: React.FC = () => {
             </div>
 
             <div className="lg:col-span-1">
-              <div className="bg-[#18191D]/80 border border-[rgba(230,234,240,0.06)] rounded-[2rem] p-6 sticky top-28 backdrop-blur-xl shadow-2xl">
+              <div className="bg-[#101114]/90 border border-white/[0.08] rounded-2xl p-5 sticky top-28 backdrop-blur-xl shadow-[0_24px_80px_rgba(0,0,0,0.3)]">
                 <h3 className="text-sm font-semibold text-[#B7BFD9] uppercase tracking-wider mb-6 flex items-center gap-2">
                   <Volume2 className="w-4 h-4" />
-                  Output Artifact
+                  Output signal
                 </h3>
 
                 {!audioState.buffer && !audioState.isLoading && (
-                  <div className="h-48 rounded-[1.5rem] border border-dashed border-[rgba(230,234,240,0.1)] flex flex-col items-center justify-center text-[#B7BFD9]/60 bg-[#212226]/50">
-                     <div className="p-4 bg-[#2F3034] rounded-full mb-3 shadow-inner">
+                  <div className="h-48 rounded-xl border border-dashed border-white/[0.12] flex flex-col items-center justify-center text-[#B7BFD9]/60 bg-white/[0.025]">
+                     <div className="p-4 bg-white/[0.06] rounded-xl mb-3 shadow-inner">
                        <Play className="w-6 h-6 text-[#B7BFD9]/50 ml-1" />
                      </div>
                      <p className="text-sm font-medium">Awaiting synthesis</p>
@@ -400,7 +419,7 @@ const App: React.FC = () => {
                 )}
 
                 {audioState.isLoading && (
-                   <div className="h-48 rounded-[1.5rem] bg-[#212226] flex flex-col items-center justify-center animate-pulse border border-[rgba(230,234,240,0.03)]">
+                   <div className="h-48 rounded-xl bg-white/[0.04] flex flex-col items-center justify-center animate-pulse border border-white/[0.06]">
                       <div className="flex gap-1.5 mb-4">
                          <div className="w-1.5 h-6 bg-indigo-500 rounded-full animate-[bounce_1s_infinite_0ms]"></div>
                          <div className="w-1.5 h-10 bg-cyan-400 rounded-full animate-[bounce_1s_infinite_100ms]"></div>
@@ -408,7 +427,7 @@ const App: React.FC = () => {
                          <div className="w-1.5 h-12 bg-cyan-400 rounded-full animate-[bounce_1s_infinite_300ms]"></div>
                          <div className="w-1.5 h-5 bg-indigo-500 rounded-full animate-[bounce_1s_infinite_400ms]"></div>
                       </div>
-                      <p className="text-xs text-indigo-400 font-medium typewriter uppercase tracking-widest">Synthesizing</p>
+                      <p className="text-xs text-[#f5a623] font-medium typewriter uppercase tracking-widest">Synthesizing</p>
                    </div>
                 )}
 

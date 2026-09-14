@@ -29,7 +29,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyser, isPlaying }) => {
 
       analyser.getByteFrequencyData(dataArray);
 
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.2)'; // Fade out effect
+      ctx.fillStyle = 'rgba(9, 10, 12, 0.2)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const barWidth = (canvas.width / bufferLength) * 2.5;
@@ -40,11 +40,8 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyser, isPlaying }) => {
         barHeight = dataArray[i] / 2;
 
         // Gradient color based on height
-        const r = barHeight + 25 * (i / bufferLength);
-        const g = 250 * (i / bufferLength);
-        const b = 255;
-
-        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        const progress = i / bufferLength;
+        ctx.fillStyle = `rgb(${245 - Math.round(progress * 140)}, ${166 + Math.round(progress * 50)}, ${35 + Math.round(progress * 175)})`;
         // Center the bars vertically
         const y = (canvas.height - barHeight) / 2;
         
@@ -68,7 +65,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ analyser, isPlaying }) => {
       ref={canvasRef}
       width={600}
       height={150}
-      className="w-full h-32 rounded-lg bg-slate-900 shadow-inner border border-slate-700/50"
+      className="w-full h-32 rounded-xl bg-[#090a0c] shadow-inner border border-white/[0.08]"
     />
   );
 };

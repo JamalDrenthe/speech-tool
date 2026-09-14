@@ -1,22 +1,49 @@
 import React from 'react';
+import { Moon, Sun } from 'lucide-react';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
   return (
-    <header className="py-4 fixed top-0 left-0 right-0 z-50">
-      <div className="mx-auto px-6 md:px-12 flex items-center justify-between">
-        <div className="flex items-center backdrop-blur-md bg-[#18191D]/80 border border-[rgba(230,234,240,0.06)] py-2 px-5 rounded-full shadow-sm">
-          {/* Make sure the image file is named logo.png and placed in your public/root directory */}
-          <img src="logo.png" alt="JD Logo" className="h-5 w-auto object-contain" />
+    <header className="py-5 fixed top-0 left-0 right-0 z-50">
+      <div className="mx-auto max-w-7xl px-5 md:px-10 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="brand-mark flex items-center justify-center w-9 h-9 rounded-lg bg-white/95 border border-white/20">
+            <img src="/jdlogo-dark-mark.png" alt="Jamal Drenthe" className="brand-logo-dark h-6 w-auto object-contain" />
+            <img src="/jdlogo-mark-light.png" alt="" aria-hidden="true" className="brand-logo-light h-6 w-auto object-contain" />
+          </div>
+          <div className="hidden sm:block">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-[#8e929c]">Jamal Drenthe</p>
+            <p className="text-sm font-semibold tracking-tight text-white">Speech Tool</p>
+          </div>
         </div>
         
-        <div className="hidden md:flex items-center gap-6 backdrop-blur-md bg-[#18191D]/80 border border-[rgba(230,234,240,0.06)] py-1.5 px-6 rounded-full shadow-sm">
-           <span className="text-sm font-medium text-[#B7BFD9] hover:text-white cursor-pointer transition-colors">Product</span>
-           <span className="text-sm font-medium text-[#B7BFD9] hover:text-white cursor-pointer transition-colors">Use Cases</span>
-           <span className="text-sm font-medium text-[#B7BFD9] hover:text-white cursor-pointer transition-colors">Resources</span>
+        <div className="hidden md:flex items-center gap-7">
+           <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#8e929c]">Studio</span>
+           <span className="text-xs font-medium uppercase tracking-[0.18em] text-[#8e929c]">Voice Lab</span>
+           <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[#79b0ff]">
+             <span className="w-1.5 h-1.5 rounded-full bg-[#5b9cff]" />
+             Workspace
+           </span>
         </div>
 
-        {/* Empty div to maintain the center alignment of the navigation links using flex justify-between */}
-        <div className="w-20 hidden md:block"></div>
+        <div className="flex items-center gap-3 text-xs text-[#8e929c]">
+          <span className="hidden sm:inline-flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#63d7a4]" />
+            Ready
+          </span>
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            className="glass-control flex h-9 w-9 items-center justify-center rounded-lg"
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
     </header>
   );
