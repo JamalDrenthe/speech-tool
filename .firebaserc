@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "speechos-dev",
+    "dev": "speechos-dev",
+    "prod": "speechos-prod"
+  }
+}
