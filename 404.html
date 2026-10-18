@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="project-name" content="Speech OS">
-    <title>404 — Pagina Niet Gevonden | Speech OS</title>
+    <meta name="project-name" content="Speech Tool">
+    <title>404 — Pagina Niet Gevonden | Speech Tool</title>
     
-    <!-- Fonts -->
+    <!-- Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Optionele CDNs (met graceful fallback als CSP ze blokkeert) -->
+    <!-- Optionele CDNs met onfeilbare fallback bij CSP blokkades -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
@@ -30,27 +30,28 @@
         }
     </script>
     
-    <!-- 100% Zelfstandige CSS: Volledig Transparante Logo Weergave (Zonder achtergrond) -->
+    <!-- 100% Zelfstandige CSS: Volledig Transparante Logo Weergave (ZONDER ACHTERGRONDBOX) -->
     <style>
         :root {
             --bg-primary: #ffffff;
             --text-primary: #0a0a0a;
-            --text-secondary: #737373;
-            --card-surface: rgba(255, 255, 255, 0.82);
-            --card-border: rgba(0, 0, 0, 0.12);
+            --text-secondary: #71717a;
             --accent: #0ea5e9;
             --btn-bg: #000000;
             --btn-text: #ffffff;
+            --card-border: rgba(0, 0, 0, 0.12);
+            --card-surface: rgba(255, 255, 255, 0.85);
         }
 
         html.dark {
             --bg-primary: #070709;
             --text-primary: #fafafa;
-            --text-secondary: #a3a3a3;
-            --card-surface: rgba(14, 14, 18, 0.82);
-            --card-border: rgba(255, 255, 255, 0.14);
+            --text-secondary: #a1a1aa;
+            --accent: #0ea5e9;
             --btn-bg: #ffffff;
             --btn-text: #000000;
+            --card-border: rgba(255, 255, 255, 0.14);
+            --card-surface: rgba(14, 14, 18, 0.85);
         }
 
         * {
@@ -94,7 +95,7 @@
             background: radial-gradient(circle at center, transparent 25%, rgba(7, 7, 9, 0.75) 100%);
         }
 
-        /* Header met 100% transparant logo */
+        /* Header met 100% TRANSPARANT LOGO */
         .top-header {
             position: relative;
             z-index: 20;
@@ -115,37 +116,30 @@
             color: inherit;
         }
 
-        /* Geen achtergrond, geen rand, puur transparant */
+        /* Zonder achtergrond, zonder border, puur transparant */
         .brand-logo-badge {
-            width: 42px;
-            height: 42px;
-            background: transparent !important;
-            box-shadow: none !important;
-            border: none !important;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0;
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+            padding: 0 !important;
             overflow: visible;
             transition: transform 0.3s ease;
         }
         .brand-link:hover .brand-logo-badge {
-            transform: scale(1.1) rotate(3deg);
-        }
-
-        .brand-logo-badge img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: transparent !important;
-            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15));
+            transform: scale(1.08) rotate(2deg);
         }
 
         .brand-name {
             font-family: 'Space Grotesk', 'Inter', sans-serif;
             font-weight: 700;
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
         }
 
         .theme-btn {
@@ -230,7 +224,7 @@
             filter: drop-shadow(0 20px 30px rgba(0,0,0,0.15));
         }
 
-        /* 3D Vrij Zwevend Bedrijfslogo (ZONDER ACHTERGROND) */
+        /* 3D Vrij Zwevend Bedrijfslogo (PUUR TRANSPARANT, GEEN ACHTERGROND) */
         .centerpiece {
             position: relative;
             margin: 0 clamp(0.75rem, 2.5vw, 2.5rem);
@@ -241,51 +235,21 @@
             justify-content: center;
         }
 
-        /* Puur transparante container zonder kaart, zonder rand, zonder schaduwbox */
         .center-logo-box {
-            width: clamp(100px, 22vw, 220px);
-            height: clamp(100px, 22vw, 220px);
             display: flex;
             align-items: center;
             justify-content: center;
             background: transparent !important;
             box-shadow: none !important;
             border: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
             transform: translateZ(45px);
             transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .center-logo-box img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            background: transparent !important;
-            /* Zachte 3D diepteschaduw achter het transparante logo zelf */
-            filter: drop-shadow(0 20px 35px rgba(0, 0, 0, 0.28));
-            transition: transform 0.4s ease;
-        }
-        html.dark .center-logo-box img {
-            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 25px rgba(255, 255, 255, 0.08));
-        }
-
-        .centerpiece:hover .center-logo-box img {
-            transform: scale(1.08);
-        }
-
-        .fallback-center {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: transparent !important;
-        }
-        .fallback-center span {
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 900;
-            font-size: clamp(2.5rem, 7vw, 4.5rem);
-            line-height: 1;
-            color: var(--text-primary);
-            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.2));
+        .centerpiece:hover .center-logo-box {
+            transform: translateZ(65px) scale(1.08);
         }
 
         /* CTA & Typography */
@@ -301,7 +265,7 @@
             color: var(--text-secondary);
             font-size: clamp(0.85rem, 2vw, 1rem);
             margin-top: 0.5rem;
-            max-width: 440px;
+            max-width: 460px;
         }
 
         .cta-btn {
@@ -365,18 +329,17 @@
 </head>
 <body>
 
-    <!-- 3D Canvas (ondersteunt Three.js EN standalone HTML5 Canvas fallback) -->
+    <!-- 3D Canvas (Three.js WebGL met naadloze HTML5 Canvas fallback) -->
     <canvas id="bg-canvas"></canvas>
     <div class="vignette"></div>
 
-    <!-- Header met ECHT Transparant Bedrijfslogo (Zonder achtergrondbox) -->
+    <!-- Header met ECHT WEBSITE LOGO (ZONDER ACHTERGRONDBOX) -->
     <header class="top-header">
-        <a href="/" onclick="handleNavClick(event)" class="brand-link" aria-label="Speech OS Home">
+        <a href="/" onclick="handleNavClick(event)" class="brand-link" aria-label="Speech Tool Home">
             <div class="brand-logo-badge">
-                <img src="/jdlogo-dark-transparent.png" alt="Speech OS Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                <span style="display:none; font-family:'Space Grotesk',sans-serif; font-weight:800; font-size:1.1rem; color:var(--text-primary);">SOS</span>
+                <img src="/jdlogo-dark-transparent.png" alt="Speech Tool" style="height:34px; width:auto; object-fit:contain;" />
             </div>
-            <span class="brand-name">Speech OS</span>
+            <span class="brand-name">Speech Tool</span>
         </a>
 
         <button onclick="toggleTheme()" class="theme-btn" aria-label="Wissel thema">
@@ -400,13 +363,10 @@
                 <span class="digit-layer-front">4</span>
             </div>
 
-            <!-- Middelste 3D Bedrijfslogo (VRIJ ZWEVEND ZONDER ACHTERGRONDBOX) -->
+            <!-- Middelste 3D Bedrijfslogo (VRIJ ZWEVEND IN 3D, GEEN ACHTERGRONDBOX) -->
             <div id="company-centerpiece" onclick="triggerLogoPulse(event)" class="centerpiece" title="Klik voor 3D interactie">
                 <div id="center-logo-box" class="center-logo-box">
-                    <img src="/jdlogo-dark-transparent.png" alt="Speech OS" onerror="this.style.display='none'; document.getElementById('fallback-center').style.display='flex';" />
-                    <div id="fallback-center" class="fallback-center" style="display:none;">
-                        <span>SOS</span>
-                    </div>
+                    <img src="/jdlogo-dark-transparent.png" alt="Speech Tool" style="width:clamp(100px, 20vw, 160px); height:clamp(100px, 20vw, 160px); object-fit:contain; filter:drop-shadow(0 20px 35px rgba(14,165,233,0.4));" />
                 </div>
             </div>
 
@@ -419,7 +379,7 @@
 
         <div class="preserve-3d">
             <h1 class="copy-title">Pagina niet gevonden.</h1>
-            <p class="copy-desc">Deze link bestaat niet binnen Speech OS of is verplaatst.</p>
+            <p class="copy-desc">Deze pagina bestaat niet binnen Speech Tool of is verplaatst.</p>
         </div>
 
         <div>
@@ -436,15 +396,15 @@
 
     <!-- Footer -->
     <footer class="bottom-footer">
-        <span style="font-weight:600; color:var(--text-primary);">© Speech OS</span>
-        <span style="font-family:monospace;">404</span>
+        <span style="font-weight:600; color:var(--text-primary);">© Speech Tool</span>
+        <span style="font-family:monospace; font-size:0.85rem;">404</span>
     </footer>
 
     <!-- Toast Notification -->
     <div id="toast">Terug naar startpagina...</div>
 
     <script>
-        // --- 1. Navigatie ---
+        // --- 1. Terug naar Home van dit specifieke project ---
         const baseHref = document.querySelector('base')?.getAttribute('href');
         const TARGET_HOME = baseHref || "/";
 
@@ -458,7 +418,7 @@
             }, 300);
         }
 
-        // --- 2. Dark/Light Mode ---
+        // --- 2. Dark/Light Theme Switching ---
         function applyTheme(isDark) {
             if (isDark) {
                 document.documentElement.classList.add('dark');
@@ -535,8 +495,8 @@
             }
         }
 
-        // --- 4. Interactive Background (Three.js OR Native Canvas Fallback) ---
-        let scene, camera, renderer, terrainMesh, floatingShapes = [];
+        // --- 4. Interactive 3D Background (Three.js OR Native Canvas Fallback) ---
+        let scene, camera, renderer, terrainMesh;
         let canvas = document.getElementById('bg-canvas');
         let ctx = null;
         let useNativeCanvas = false;
@@ -565,7 +525,7 @@
                     scene.add(terrainMesh);
                     return;
                 } catch (e) {
-                    console.warn("Three.js kon niet starten, native canvas fallback actief:", e);
+                    console.warn("Three.js WebGL geblokkeerd of niet ondersteund, activeert native canvas fallback:", e);
                 }
             }
 
@@ -587,55 +547,72 @@
             requestAnimationFrame(animate);
             clock += 0.02;
 
-            smoothX += (mouseX - smoothX) * 0.075;
-            smoothY += (mouseY - smoothY) * 0.075;
+            smoothX += (mouseX - smoothX) * 0.06;
+            smoothY += (mouseY - smoothY) * 0.06;
 
-            if (rig3D) {
-                rig3D.style.transform = `rotateX(${-smoothY * 16}deg) rotateY(${smoothX * 20}deg)`;
+            if (rig3D && !isScrambled) {
+                const rotY = smoothX * 18;
+                const rotX = -smoothY * 18;
+                rig3D.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
             }
 
-            if (useNativeCanvas && ctx) {
+            if (shockwaveStrength > 0.01) {
+                shockwaveStrength *= 0.93;
+            } else {
+                shockwaveStrength = 0;
+            }
+
+            if (terrainMesh) {
+                const pos = terrainMesh.geometry.attributes.position;
+                for (let i = 0; i < pos.count; i++) {
+                    const x = pos.getX(i);
+                    const y = pos.getY(i);
+                    let z = Math.sin(x * 0.28 + clock) * Math.cos(y * 0.28 + clock) * 0.7;
+
+                    if (shockwaveStrength > 0) {
+                        const dist = Math.hypot(x - shockwaveOrigin.x, y - shockwaveOrigin.y);
+                        z += Math.sin(dist * 0.8 - clock * 4) * shockwaveStrength * Math.exp(-dist * 0.1);
+                    }
+                    pos.setZ(i, z);
+                }
+                pos.needsUpdate = true;
+                terrainMesh.rotation.z = smoothX * 0.1;
+                renderer.render(scene, camera);
+            } else if (useNativeCanvas && ctx) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 const isDark = document.documentElement.classList.contains('dark');
-                ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+                ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.05)';
                 ctx.lineWidth = 1;
 
-                // Animated perspective grid
-                const horizonY = canvas.height * 0.65 + smoothY * 40;
-                const vpX = canvas.width * 0.5 + smoothX * 60;
-                const numLines = 22;
+                const step = 48;
+                const offsetX = (smoothX * 24 + clock * 10) % step;
+                const offsetY = (smoothY * 24 + clock * 10) % step;
 
-                for (let i = -numLines; i <= numLines; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(vpX, horizonY);
-                    const bottomX = vpX + i * 75 + Math.sin(clock + i) * 10;
-                    ctx.lineTo(bottomX, canvas.height);
-                    ctx.stroke();
+                ctx.beginPath();
+                for (let x = offsetX; x < canvas.width; x += step) {
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
                 }
-
-                // Horizontal flowing wave lines
-                for (let j = 0; j < 12; j++) {
-                    const progress = (j / 12 + (clock * 0.1)) % 1;
-                    const y = horizonY + Math.pow(progress, 2.2) * (canvas.height - horizonY);
-                    ctx.beginPath();
+                for (let y = offsetY; y < canvas.height; y += step) {
                     ctx.moveTo(0, y);
                     ctx.lineTo(canvas.width, y);
-                    ctx.stroke();
                 }
-            } else if (renderer && scene && camera) {
-                if (camera) {
-                    camera.position.x = smoothX * 4;
-                    camera.position.y = -14 - smoothY * 3;
-                    camera.lookAt(0, 1, 0);
-                }
-                renderer.render(scene, camera);
+                ctx.stroke();
             }
         }
 
-        window.onload = function() {
-            initBackground();
-            animate();
-        };
+        window.addEventListener('resize', () => {
+            if (renderer && camera) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            } else if (useNativeCanvas) {
+                resizeCanvas();
+            }
+        });
+
+        initBackground();
+        animate();
     </script>
 </body>
 </html>
