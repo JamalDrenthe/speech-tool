@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="nl" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- OPTIONEEL: Vul hier per project je naam in (wordt automatisch overal getoond) -->
+    <meta name="project-name" content="Speech Tool">
+    <title id="page-title">404 — Pagina Niet Gevonden | Speech Tool</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --text-primary: #0a0a0a;
+            --card-surface: rgba(255, 255, 255, 0.78);
+            --card-border: rgba(0, 0, 0, 0.14);
+        }
+
+        html.dark {
+            --bg-primary: #070709;
+            --text-primary: #fafafa;
+            --card-surface: rgba(14, 14, 18, 0.78);
+            --card-border: rgba(255, 255, 255, 0.16);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.45s cubic-bezier(0.16, 1, 0.3, 1), color 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* 3D Stage & Preservation */
+        .perspective-stage {
+            perspective: 1200px;
+            transform-style: preserve-3d;
+        }
+
+        .preserve-3d {
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        /* Glassmorphic 3D Monolith Card */
+        .jd-3d-card {
+            background: var(--card-surface);
+            border: 1.5px solid var(--card-border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 
+                0 30px 60px -15px rgba(0, 0, 0, 0.18),
+                0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+            transition: border-color 0.35s ease, box-shadow 0.35s ease, background-color 0.45s ease;
+        }
+
+        html.dark .jd-3d-card {
+            box-shadow: 
+                0 35px 70px -15px rgba(0, 0, 0, 0.75),
+                0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+        }
+
+        /* Continuous subtle 3D levitation */
+        @keyframes float3D {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-levitate {
+            animation: float3D 6s ease-in-out infinite;
+            transform-style: preserve-3d;
+        }
+
+        /* Smooth transitions when toggling explosion state */
+        .jd-part-transition {
+            transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #bg-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black relative">
+
+    <!-- Interactive 3D WebGL Background Canvas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Ambient Radial Vignette for readability over 3D grid -->
+    <div class="pointer-events-none fixed inset-0 z-[1] bg-[radial-gradient(circle_at_center,transparent_25%,rgba(255,255,255,0.65)_100%)] dark:bg-[radial-gradient(circle_at_center,transparent_25%,rgba(7,7,9,0.75)_100%)] transition-colors duration-500"></div>
+
+    <!-- Minimal Top Bar -->
+    <header class="relative z-20 w-full max-w-6xl mx-auto px-6 sm:px-10 pt-8 flex items-center justify-between">
+        <!-- Terug naar home (automatisch root van project '/') -->
+        <a href="/" onclick="handleNavClick(event)" class="group flex items-center gap-3 focus:outline-none" aria-label="Home">
+            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-md group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <!-- Project Logo / Monogram -->
+                <svg viewBox="0 0 1000 1000" class="w-7 h-7 sm:w-8 sm:h-8 fill-current" aria-hidden="true">
+                    <path d="M 140 256 H 386 V 560 C 386 680 315 755 215 755 C 165 755 128 730 105 684 L 160 603 C 178 632 197 648 225 648 C 262 648 285 620 285 560 V 358 H 140 Z" />
+                    <path d="M 417 256 H 625 C 795 256 895 352 895 500 C 895 648 795 744 625 744 H 417 V 390 H 526 V 642 H 620 C 728 642 782 588 782 500 C 782 412 728 358 620 358 H 417 Z" />
+                </svg>
+            </div>
+            <!-- Dynamische projectnaam naast het logo -->
+            <span class="font-display font-bold text-sm tracking-tight text-neutral-800 dark:text-neutral-200 project-name-text">Speech Tool</span>
+        </a>
+
+        <!-- Dark / Light Mode Toggle -->
+        <button onclick="toggleTheme()" id="theme-toggle" class="p-2.5 rounded-xl border border-neutral-200/80 dark:border-neutral-800 bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md hover:scale-105 hover:border-black dark:hover:border-white transition-all shadow-sm" aria-label="Wissel thema">
+            <svg id="icon-sun" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"></path>
+            </svg>
+            <svg id="icon-moon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 text-center perspective-stage">
+        
+        <!-- 3D Rig Container driven by smooth spring physics -->
+        <div id="rig-3d" class="preserve-3d flex items-center justify-center my-4 animate-levitate max-w-full">
+            
+            <!-- Left '4' with 3D Extruded Depth Layers -->
+            <div id="digit-left-group" class="relative preserve-3d flex items-center justify-center">
+                <span aria-hidden="true" class="absolute font-display font-black text-[5.5rem] sm:text-[10rem] md:text-[14rem] leading-none tracking-tighter text-black/[0.04] dark:text-white/[0.04] pointer-events-none" style="transform: translateZ(-55px);">4</span>
+                <span aria-hidden="true" class="absolute font-display font-black text-[5.5rem] sm:text-[10rem] md:text-[14rem] leading-none tracking-tighter text-black/[0.08] dark:text-white/[0.08] pointer-events-none" style="transform: translateZ(-30px);">4</span>
+                <span id="digit-left" class="font-display font-black text-[5.5rem] sm:text-[10rem] md:text-[14rem] leading-none tracking-tighter text-black dark:text-white drop-shadow-2xl" style="transform: translateZ(20px);">
+                    4
+                </span>
+            </div>
+
+            <!-- Center Interactive 3D Monolith replacing the '0' -->
+            <div id="jd-centerpiece" onclick="triggerLogoPulse(event)" class="relative mx-2 sm:mx-6 md:mx-8 cursor-pointer group preserve-3d" title="Klik voor 3D interactie">
+                
+                <!-- Deep 3D Shadow Plate -->
+                <div class="absolute inset-0 rounded-3xl bg-black/10 dark:bg-white/5 blur-xl pointer-events-none transition-transform duration-500" style="transform: translateZ(-50px) scale(0.94);"></div>
+
+                <!-- Floating 3D Corner Ticks (Hovering in front of the card at Z=65px) -->
+                <div class="absolute -top-3 -left-3 w-4 h-4 border-t-2 border-l-2 border-black dark:border-white opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" style="transform: translateZ(65px);"></div>
+                <div class="absolute -top-3 -right-3 w-4 h-4 border-t-2 border-r-2 border-black dark:border-white opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" style="transform: translateZ(65px);"></div>
+                <div class="absolute -bottom-3 -left-3 w-4 h-4 border-b-2 border-l-2 border-black dark:border-white opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" style="transform: translateZ(65px);"></div>
+                <div class="absolute -bottom-3 -right-3 w-4 h-4 border-b-2 border-r-2 border-black dark:border-white opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" style="transform: translateZ(65px);"></div>
+
+                <!-- Main 3D Glass/Monolith Card -->
+                <div class="jd-3d-card w-24 h-24 sm:w-40 sm:h-40 md:w-52 md:h-52 rounded-2xl sm:rounded-3xl flex items-center justify-center relative preserve-3d group-hover:border-black dark:group-hover:border-white">
+                    
+                    <!-- Dynamic Specular Glare Overlay -->
+                    <div id="card-glare" class="absolute inset-0 rounded-3xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.22), transparent 65%); transform: translateZ(2px);"></div>
+
+                    <!-- Inner 3D Recessed Wireframe Grid -->
+                    <div class="absolute inset-3 rounded-2xl border border-black/10 dark:border-white/10 pointer-events-none" style="transform: translateZ(-18px);"></div>
+
+                    <!-- Deep Extruded Ghost Layer of Logo (Z = -10px) -->
+                    <svg viewBox="0 0 1000 1000" class="absolute w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 fill-black/10 dark:fill-white/10 pointer-events-none overflow-visible" style="transform: translateZ(-10px);" aria-hidden="true">
+                        <path d="M 140 256 H 386 V 560 C 386 680 315 755 215 755 C 165 755 128 730 105 684 L 160 603 C 178 632 197 648 225 648 C 262 648 285 620 285 560 V 358 H 140 Z" />
+                        <path d="M 417 256 H 625 C 795 256 895 352 895 500 C 895 648 795 744 625 744 H 417 V 390 H 526 V 642 H 620 C 728 642 782 588 782 500 C 782 412 728 358 620 358 H 417 Z" />
+                    </svg>
+
+                    <!-- Mid Extruded Layer of Logo (Z = 15px) -->
+                    <svg viewBox="0 0 1000 1000" class="absolute w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 fill-black/20 dark:fill-white/20 pointer-events-none overflow-visible" style="transform: translateZ(15px);" aria-hidden="true">
+                        <path d="M 140 256 H 386 V 560 C 386 680 315 755 215 755 C 165 755 128 730 105 684 L 160 603 C 178 632 197 648 225 648 C 262 648 285 620 285 560 V 358 H 140 Z" />
+                        <path d="M 417 256 H 625 C 795 256 895 352 895 500 C 895 648 795 744 625 744 H 417 V 390 H 526 V 642 H 620 C 728 642 782 588 782 500 C 782 412 728 358 620 358 H 417 Z" />
+                    </svg>
+
+                    <!-- Foreground Crisp 3D Logo / Monogram (Floating at Z = 42px) -->
+                    <svg id="interactive-jd-svg" viewBox="0 0 1000 1000" class="w-28 h-28 sm:w-40 sm:h-40 md:w-48 md:h-48 fill-black dark:fill-white overflow-visible drop-shadow-xl" style="transform: translateZ(42px);" aria-label="Logo">
+                        <path id="jd-path-j" class="jd-part-transition" d="M 140 256 H 386 V 560 C 386 680 315 755 215 755 C 165 755 128 730 105 684 L 160 603 C 178 632 197 648 225 648 C 262 648 285 620 285 560 V 358 H 140 Z" />
+                        <path id="jd-path-d" class="jd-part-transition" d="M 417 256 H 625 C 795 256 895 352 895 500 C 895 648 795 744 625 744 H 417 V 390 H 526 V 642 H 620 C 728 642 782 588 782 500 C 782 412 728 358 620 358 H 417 Z" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Right '4' with 3D Extruded Depth Layers -->
+            <div id="digit-right-group" class="relative preserve-3d flex items-center justify-center">
+                <span aria-hidden="true" class="absolute font-display font-black text-[5.5rem] sm:text-[10rem] md:text-[14rem] leading-none tracking-tighter text-black/[0.04] dark:text-white/[0.04] pointer-events-none" style="transform: translateZ(-55px);">4</span>
+                <span aria-hidden="true" class="absolute font-display font-black text-[5.5rem] sm:text-[10rem] md:text-[14rem] leading-none tracking-tighter text-black/[0.08] dark:text-white/[0.08] pointer-events-none" style="transform: translateZ(-30px);">4</span>
+                <span id="digit-right" class="font-display font-black text-[5.5rem] sm:text-[10rem] md:text-[14rem] leading-none tracking-tighter text-black dark:text-white drop-shadow-2xl" style="transform: translateZ(20px);">
+                    4
+                </span>
+            </div>
+        </div>
+
+        <!-- Minimal Copy & Magnetic CTA -->
+        <div id="copy-block" class="preserve-3d mt-6">
+            <h1 class="font-display text-xl sm:text-3xl font-bold tracking-tight">
+                Pagina niet gevonden.
+            </h1>
+            <p class="text-neutral-500 dark:text-neutral-400 text-sm sm:text-base mt-2 max-w-md mx-auto">
+                Deze pagina bestaat niet binnen dit project of is verplaatst.
+            </p>
+        </div>
+
+        <div class="mt-8">
+            <!-- href="/" zorgt dat hij altijd naar de home van het specifieke domein/project gaat -->
+            <a id="magnetic-btn" href="/" onclick="handleNavClick(event)" class="px-7 py-3.5 rounded-2xl bg-black dark:bg-white text-white dark:text-black font-semibold text-sm sm:text-base shadow-xl inline-flex items-center gap-2.5 transition-shadow duration-300 hover:shadow-2xl will-change-transform">
+                <svg class="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>Terug naar Home</span>
+            </a>
+        </div>
+
+    </main>
+
+    <!-- Minimal Footer -->
+    <footer class="relative z-10 w-full max-w-6xl mx-auto px-6 sm:px-10 py-6 flex items-center justify-between text-xs text-neutral-400 dark:text-neutral-500">
+        <span class="font-semibold text-black dark:text-white">© <span class="project-name-text">Speech Tool</span></span>
+        <span class="font-mono">404</span>
+    </footer>
+
+    <!-- Subtle Notification Toast -->
+    <div id="toast-notification" class="fixed bottom-6 right-6 z-50 pointer-events-none opacity-0 translate-y-4 transition-all duration-300">
+        <div class="px-4 py-2.5 rounded-xl bg-black dark:bg-white text-white dark:text-black shadow-xl text-xs font-medium">
+            <span id="toast-message">Terug naar startpagina...</span>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Automatische Projectdetectie & Navigatie ---
+        // Haalt automatisch de projectnaam op uit de meta-tag of gebruikt de hostname als fallback
+        const metaName = document.querySelector('meta[name="project-name"]')?.getAttribute('content');
+        const projectName = (metaName && metaName !== 'Mijn Project') ? metaName : (window.location.hostname ? window.location.hostname.replace('www.', '').split('.')[0].toUpperCase() : 'JD');
+
+        document.querySelectorAll('.project-name-text').forEach(el => el.textContent = projectName);
+        document.title = `404 — Pagina Niet Gevonden | ${projectName}`;
+
+        // Bepaal de juiste home-locatie (ondersteunt ook submappen/base-tags)
+        const baseHref = document.querySelector('base')?.getAttribute('href');
+        const TARGET_HOME = baseHref || "/";
+
+        function handleNavClick(e) {
+            e.preventDefault();
+            const targetUrl = e.currentTarget.getAttribute('href') || TARGET_HOME;
+            const toast = document.getElementById('toast-notification');
+            document.getElementById('toast-message').textContent = 'Terug naar startpagina...';
+            toast.classList.remove('opacity-0', 'translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 300);
+        }
+
+        // --- 2. Dark Mode State & Systeemvoorkeur ---
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+            if (terrainMesh) {
+                terrainMesh.material.color.setHex(isDark ? 0xffffff : 0x000000);
+                terrainMesh.material.opacity = isDark ? 0.11 : 0.08;
+            }
+            floatingShapes.forEach((cube) => {
+                cube.material.color.setHex(isDark ? 0xffffff : 0x000000);
+                cube.material.opacity = isDark ? 0.22 : 0.16;
+            });
+            shockwaveStrength = 3.5;
+        }
+
+        // --- 3. 3D UI Spring Physics State ---
+        const rig3D = document.getElementById('rig-3d');
+        const pathJ = document.getElementById('jd-path-j');
+        const pathD = document.getElementById('jd-path-d');
+        const digitLeftGroup = document.getElementById('digit-left-group');
+        const digitRightGroup = document.getElementById('digit-right-group');
+        const cardGlare = document.getElementById('card-glare');
+        const magneticBtn = document.getElementById('magnetic-btn');
+
+        let mouseX = 0, mouseY = 0; // Normalized -1 to 1
+        let smoothX = 0, smoothY = 0;
+        let isScrambled = false;
+        let shockwaveStrength = 0;
+        let shockwaveOrigin = { x: 0, y: 0 };
+
+        function updatePointer(clientX, clientY) {
+            mouseX = (clientX / window.innerWidth) * 2 - 1;
+            mouseY = (clientY / window.innerHeight) * 2 - 1;
+
+            if (cardGlare) {
+                const glareX = 50 + mouseX * 45;
+                const glareY = 50 + mouseY * 45;
+                cardGlare.style.background = `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(160,160,160,0.28), transparent 65%)`;
+            }
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            updatePointer(e.clientX, e.clientY);
+
+            // Magnetic CTA Button Pull
+            if (magneticBtn) {
+                const rect = magneticBtn.getBoundingClientRect();
+                const btnCenterX = rect.left + rect.width / 2;
+                const btnCenterY = rect.top + rect.height / 2;
+                const distX = e.clientX - btnCenterX;
+                const distY = e.clientY - btnCenterY;
+                const distance = Math.hypot(distX, distY);
+
+                if (distance < 130) {
+                    const pull = (1 - distance / 130) * 0.35;
+                    magneticBtn.style.transform = `translate3d(${distX * pull}px, ${distY * pull}px, 10px) scale(1.04)`;
+                } else {
+                    magneticBtn.style.transform = 'translate3d(0px, 0px, 0px) scale(1)';
+                }
+            }
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: true });
+
+        // --- 4. Three.js Interactive 3D Background ---
+        let scene, camera, renderer, terrainMesh, floatingShapes = [];
+        const GRID_COLS = 44;
+        const GRID_ROWS = 28;
+        const GRID_SPACING = 1.65;
+        let basePositions = [];
+
+        function initThreeScene() {
+            if (typeof THREE === 'undefined') {
+                console.info("Three.js kon niet worden geladen. 3D achtergrond is overgeslagen.");
+                return;
+            }
+            const canvas = document.getElementById('bg-canvas');
+            if (!canvas) return;
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
+            camera.position.set(0, -14, 24);
+            camera.lookAt(0, 0, 0);
+
+            try {
+                renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            } catch (e) {
+                console.warn("WebGL niet ondersteund door browser:", e);
+                return;
+            }
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // Wireframe Terrain
+            const planeGeo = new THREE.PlaneGeometry(
+                GRID_COLS * GRID_SPACING,
+                GRID_ROWS * GRID_SPACING,
+                GRID_COLS,
+                GRID_ROWS
+            );
+
+            const posAttr = planeGeo.attributes.position;
+            basePositions = new Float32Array(posAttr.array.length);
+            basePositions.set(posAttr.array);
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const planeMat = new THREE.MeshBasicMaterial({
+                color: isDark ? 0xffffff : 0x000000,
+                wireframe: true,
+                transparent: true,
+                opacity: isDark ? 0.11 : 0.08
+            });
+
+            terrainMesh = new THREE.Mesh(planeGeo, planeMat);
+            scene.add(terrainMesh);
+
+            // Floating 3D Geometric Shards
+            const boxGeo = new THREE.BoxGeometry(1.1, 1.1, 1.1);
+            const edgesGeo = new THREE.EdgesGeometry(boxGeo);
+            const lineMat = new THREE.LineBasicMaterial({
+                color: isDark ? 0xffffff : 0x000000,
+                transparent: true,
+                opacity: isDark ? 0.22 : 0.16
+            });
+
+            for (let i = 0; i < 18; i++) {
+                const wireframeCube = new THREE.LineSegments(edgesGeo, lineMat);
+                wireframeCube.position.set(
+                    (Math.random() - 0.5) * 48,
+                    (Math.random() - 0.5) * 28,
+                    (Math.random() - 0.2) * 12
+                );
+                const scale = 0.45 + Math.random() * 1.1;
+                wireframeCube.scale.set(scale, scale, scale);
+                wireframeCube.userData = {
+                    rotSpeedX: (Math.random() - 0.5) * 0.015,
+                    rotSpeedY: (Math.random() - 0.5) * 0.015,
+                    floatSpeed: 0.8 + Math.random() * 1.2,
+                    floatOffset: Math.random() * Math.PI * 2,
+                    baseZ: wireframeCube.position.z
+                };
+                scene.add(wireframeCube);
+                floatingShapes.push(wireframeCube);
+            }
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        let clockTime = 0;
+        function animateScene() {
+            requestAnimationFrame(animateScene);
+            clockTime += 0.018;
+
+            smoothX += (mouseX - smoothX) * 0.075;
+            smoothY += (mouseY - smoothY) * 0.075;
+
+            if (rig3D) {
+                const rotateY = smoothX * 22;
+                const rotateX = -smoothY * 18;
+                rig3D.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            }
+
+            if (!isScrambled) {
+                if (pathJ && pathD) {
+                    pathJ.style.transform = `translate3d(${-smoothX * 10}px, ${-smoothY * 10}px, 12px)`;
+                    pathD.style.transform = `translate3d(${smoothX * 10}px, ${smoothY * 10}px, 24px)`;
+                }
+                if (digitLeftGroup && digitRightGroup) {
+                    digitLeftGroup.style.transform = `translate3d(${-smoothX * 16}px, ${smoothY * 8}px, 10px) rotateY(${smoothX * 8}deg)`;
+                    digitRightGroup.style.transform = `translate3d(${smoothX * 16}px, ${-smoothY * 8}px, 10px) rotateY(${smoothX * 8}deg)`;
+                }
+            }
+
+            if (terrainMesh) {
+                const posAttr = terrainMesh.geometry.attributes.position;
+                const pointerWorldX = smoothX * 22;
+                const pointerWorldY = -smoothY * 14;
+
+                for (let i = 0; i < posAttr.count; i++) {
+                    const ix = i * 3;
+                    const bx = basePositions[ix];
+                    const by = basePositions[ix + 1];
+
+                    const waveZ = Math.sin(bx * 0.22 + clockTime) * 0.85 + Math.cos(by * 0.25 + clockTime * 0.8) * 0.85;
+
+                    const dx = bx - pointerWorldX;
+                    const dy = by - pointerWorldY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const mouseRipple = Math.max(0, 1 - dist / 10) * 3.8 * Math.cos(dist * 0.55 - clockTime * 2.5);
+
+                    let shockZ = 0;
+                    if (shockwaveStrength > 0.01) {
+                        const sdx = bx - shockwaveOrigin.x;
+                        const sdy = by - shockwaveOrigin.y;
+                        const sDist = Math.sqrt(sdx * sdx + sdy * sdy);
+                        shockZ = Math.sin(sDist * 0.9 - clockTime * 6) * shockwaveStrength * Math.max(0, 1 - sDist / 28);
+                    }
+
+                    posAttr.array[ix + 2] = waveZ + mouseRipple + shockZ;
+                }
+                posAttr.needsUpdate = true;
+            }
+
+            if (shockwaveStrength > 0.01) {
+                shockwaveStrength *= 0.94;
+            }
+
+            floatingShapes.forEach((cube) => {
+                cube.rotation.x += cube.userData.rotSpeedX + (shockwaveStrength * 0.02);
+                cube.rotation.y += cube.userData.rotSpeedY + (shockwaveStrength * 0.02);
+                cube.position.z = cube.userData.baseZ + Math.sin(clockTime * cube.userData.floatSpeed + cube.userData.floatOffset) * 1.4;
+            });
+
+            if (camera) {
+                camera.position.x = smoothX * 4.5;
+                camera.position.y = -14 - smoothY * 3.2;
+                camera.lookAt(0, 1, 0);
+            }
+
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        window.addEventListener('pointerdown', (e) => {
+            shockwaveOrigin.x = ((e.clientX / window.innerWidth) * 2 - 1) * 22;
+            shockwaveOrigin.y = -((e.clientY / window.innerHeight) * 2 - 1) * 14;
+            shockwaveStrength = Math.max(shockwaveStrength, 2.8);
+        });
+
+        function triggerLogoPulse(e) {
+            if (e) e.stopPropagation();
+            isScrambled = !isScrambled;
+            shockwaveOrigin.x = 0;
+            shockwaveOrigin.y = 0;
+            shockwaveStrength = 5.5;
+
+            if (isScrambled) {
+                pathJ.style.transform = 'translate3d(-55px, 28px, 65px) rotate(-14deg)';
+                pathD.style.transform = 'translate3d(55px, -28px, 85px) rotate(12deg)';
+                digitLeftGroup.style.transform = 'translate3d(-38px, -18px, 45px) rotateY(-22deg) rotateZ(-8deg)';
+                digitRightGroup.style.transform = 'translate3d(38px, 18px, 45px) rotateY(22deg) rotateZ(8deg)';
+            } else {
+                pathJ.style.transform = 'translate3d(0px, 0px, 12px) rotate(0deg)';
+                pathD.style.transform = 'translate3d(0px, 0px, 24px) rotate(0deg)';
+                digitLeftGroup.style.transform = 'translate3d(0px, 0px, 10px) rotateY(0deg) rotateZ(0deg)';
+                digitRightGroup.style.transform = 'translate3d(0px, 0px, 10px) rotateY(0deg) rotateZ(0deg)';
+            }
+        }
+
+        // Start animatie en optionele 3D scene
+        window.onload = function () {
+            try {
+                initThreeScene();
+            } catch (err) {
+                console.warn("3D achtergrond kon niet starten:", err);
+            }
+            animateScene();
+        };
+    </script>
+</body>
+</html>
