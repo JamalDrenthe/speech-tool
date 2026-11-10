@@ -21,7 +21,13 @@ export async function decodeAudioData(
   sampleRate: number = 24000,
   numChannels: number = 1
 ): Promise<AudioBuffer> {
-  // Convert Uint8Array to Int16Array (PCM data)
+  // If the audio starts with "RIFF" (WAV container from Suno Bark or other sources)
+  if (data.length > 12 && data[0] === 0x52 && data[1] === 0x49 && data[2] === 0x46 && data[3] === 0x46) {
+    const arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+    return await ctx.decodeAudioData(arrayBuffer);
+  }
+
+  // Convert Uint8Array to Int16Array (Raw PCM data from Gemini)
   const dataInt16 = new Int16Array(data.buffer);
   const frameCount = dataInt16.length / numChannels;
   const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);

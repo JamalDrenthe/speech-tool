@@ -1,7 +1,41 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import { VoicePersona, DialogueTurn } from "../types";
+import { generateBarkSpeech } from "./barkService";
 
-const API_KEY = process.env.API_KEY || '';
+export const getApiKey = (): string => {
+  if (typeof window !== 'undefined') {
+    const localKey = localStorage.getItem('gemini_api_key');
+    if (localKey && localKey.trim()) {
+      return localKey.trim();
+    }
+  }
+  return process.env.API_KEY || process.env.GEMINI_API_KEY || '';
+};
+
+export const setApiKey = (key: string): void => {
+  if (typeof window !== 'undefined') {
+    if (key && key.trim()) {
+      localStorage.setItem('gemini_api_key', key.trim());
+    } else {
+      localStorage.removeItem('gemini_api_key');
+    }
+  }
+};
+
+export const hasApiKey = (): boolean => {
+  return Boolean(getApiKey());
+};
+
+const formatApiError = (error: any): Error => {
+  const message = error?.message || String(error);
+  if (message.includes("API_KEY_INVALID") || message.includes("API key not valid")) {
+    return new Error("Ongeldige Gemini API Key. Controleer je sleutel op https://aistudio.google.com/app/apikey");
+  }
+  if (message.includes("RESOURCE_EXHAUSTED") || message.includes("quota")) {
+    return new Error("Gemini quota overschreden. Controleer je rate limit in Google AI Studio.");
+  }
+  return error instanceof Error ? error : new Error(message);
+};
 
 export const generateSpeech = async (
   text: string, 
@@ -9,11 +43,12 @@ export const generateSpeech = async (
   emotion: string = 'Neutral',
   tempo: string = 'Normal'
 ): Promise<string> => {
-  if (!API_KEY) {
-    throw new Error("API Key is missing. Please check your environment variables.");
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error("Gemini API Key ontbreekt. Stel je key in via de 'API Key' knop bovenin of configureer GEMINI_API_KEY in .env.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
 
   try {
     // Compile active style prompts
@@ -39,18 +74,35 @@ export const generateSpeech = async (
     });
 
     const candidate = response.candidates?.[0];
-    if (!candidate) throw new Error("No candidates returned from the model.");
+    if (!candidate) throw new Error("Geen audio kandidaten geretourneerd door Gemini.");
 
     const audioPart = candidate.content?.parts?.[0];
     if (!audioPart || !audioPart.inlineData || !audioPart.inlineData.data) {
-      throw new Error("No audio data returned in the response.");
+      throw new Error("Geen audio data ontvangen van het model.");
     }
 
     return audioPart.inlineData.data;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating speech:", error);
-    throw error;
+    const errorMsg = error?.message || String(error);
+    const isQuotaExceeded = errorMsg.includes("RESOURCE_EXHAUSTED") || 
+                           errorMsg.includes("429") || 
+                           errorMsg.includes("quota") ||
+                           errorMsg.includes("rate limit") ||
+                           errorMsg.includes("limit reached");
+
+    if (isQuotaExceeded) {
+      console.warn("Gemini limiet bereikt! Schakelt automatisch over naar Suno Bark (Hugging Face fallback)...");
+      try {
+        return await generateBarkSpeech(text, persona.name);
+      } catch (barkError: any) {
+        console.error("Bark fallback error:", barkError);
+        throw new Error(`Gemini limiet is bereikt en Suno Bark fallback faalde: ${barkError?.message || barkError}`);
+      }
+    }
+
+    throw formatApiError(error);
   }
 };
 
@@ -59,11 +111,12 @@ export const generateDialogue = async (
   persona1: VoicePersona,
   persona2: VoicePersona
 ): Promise<string> => {
-  if (!API_KEY) {
-    throw new Error("API Key is missing. Please check your environment variables.");
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error("Gemini API Key ontbreekt. Stel je key in via de 'API Key' knop bovenin of configureer GEMINI_API_KEY in .env.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
 
   try {
     // Construct the script prompt mapping to "Speaker_1" and "Speaker_2"
@@ -105,27 +158,28 @@ export const generateDialogue = async (
     });
 
     const candidate = response.candidates?.[0];
-    if (!candidate) throw new Error("No candidates returned from the model.");
+    if (!candidate) throw new Error("Geen audio kandidaten geretourneerd door Gemini.");
 
     const audioPart = candidate.content?.parts?.[0];
     if (!audioPart || !audioPart.inlineData || !audioPart.inlineData.data) {
-      throw new Error("No audio data returned in the response.");
+      throw new Error("Geen audio data ontvangen van het model.");
     }
 
     return audioPart.inlineData.data;
 
   } catch (error) {
     console.error("Error generating dialogue:", error);
-    throw error;
+    throw formatApiError(error);
   }
 };
 
 export const transcribeMedia = async (base64Data: string, mimeType: string): Promise<string> => {
-  if (!API_KEY) {
-    throw new Error("API Key is missing. Please check your environment variables.");
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error("Gemini API Key ontbreekt. Stel je key in via de 'API Key' knop bovenin of configureer GEMINI_API_KEY in .env.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
 
   try {
     const response = await ai.models.generateContent({
@@ -148,6 +202,6 @@ export const transcribeMedia = async (base64Data: string, mimeType: string): Pro
     return response.text || "";
   } catch (error) {
     console.error("Error transcribing media:", error);
-    throw error;
+    throw formatApiError(error);
   }
 };
