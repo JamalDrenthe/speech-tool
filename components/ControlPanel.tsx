@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Loader2, Sparkles, Volume2, Plus, X, Trash2, Mic, Square, Activity, MessageSquare, User, ArrowLeftRight, SlidersHorizontal, FileText, Upload, Save, FolderOpen, Clock, Edit2, ListOrdered, ListPlus } from 'lucide-react';
-import { VoiceName, DEFAULT_PERSONAS, VoicePersona, DialogueTurn, SavedScene, BatchItem } from '../types';
+import { VoiceName, DEFAULT_PERSONAS, VoicePersona, DialogueTurn, SavedScene, BatchItem, EMOTION_OPTIONS, TEMPO_OPTIONS } from '../types';
 
 interface ControlPanelProps {
   onGenerateSingle: (text: string, persona: VoicePersona, emotion: string, tempo: string) => void;
@@ -17,15 +17,31 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
   // App Mode State
   const [mode, setMode] = useState<AppMode>('single');
 
-  // Unified Editable Personas State
+  // Unified Editable Personas State (with auto-merge for new default personas)
   const [personas, setPersonas] = useState<VoicePersona[]>(() => {
     const savedApp = localStorage.getItem('appPersonas');
-    if (savedApp) return JSON.parse(savedApp);
+    if (savedApp) {
+      try {
+        const parsed: VoicePersona[] = JSON.parse(savedApp);
+        const existingIds = new Set(parsed.map(p => p.id));
+        const missingDefaults = DEFAULT_PERSONAS.filter(p => !existingIds.has(p.id));
+        if (missingDefaults.length > 0) {
+          return [...parsed, ...missingDefaults];
+        }
+        return parsed;
+      } catch (e) {
+        console.error("Failed to parse saved personas:", e);
+      }
+    }
     
     // Fallback migration for older customized users
     const savedCustom = localStorage.getItem('customPersonas');
     if (savedCustom) {
-      return [...DEFAULT_PERSONAS, ...JSON.parse(savedCustom)];
+      try {
+        return [...DEFAULT_PERSONAS, ...JSON.parse(savedCustom)];
+      } catch (e) {
+        console.error("Failed to parse custom personas:", e);
+      }
     }
     return DEFAULT_PERSONAS;
   });
@@ -538,13 +554,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
                    onChange={(e) => setActiveEmotion(e.target.value)} 
                    className="w-full bg-[#121317] border border-[rgba(230,234,240,0.1)] rounded-xl p-3 text-sm font-medium text-white focus:ring-2 focus:ring-[#3186FF]/50 outline-none cursor-pointer appearance-none"
                  >
-                   <option value="Neutral">Neutral</option>
-                   <option value="Cheerfully">Cheerful</option>
-                   <option value="Sadly">Sad</option>
-                   <option value="Angrily">Angry</option>
-                   <option value="Whispering">Whispering</option>
-                   <option value="Excitedly">Excited</option>
-                   <option value="Professionally">Professional</option>
+                   {EMOTION_OPTIONS.map(opt => (
+                     <option key={opt.value} value={opt.value}>{opt.label}</option>
+                   ))}
                  </select>
               </div>
               <div className="bg-[#212226] border border-[rgba(230,234,240,0.06)] p-4 rounded-2xl">
@@ -554,11 +566,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
                    onChange={(e) => setActiveTempo(e.target.value)} 
                    className="w-full bg-[#121317] border border-[rgba(230,234,240,0.1)] rounded-xl p-3 text-sm font-medium text-white focus:ring-2 focus:ring-[#3186FF]/50 outline-none cursor-pointer appearance-none"
                  >
-                   <option value="Very Slow">Very Slow</option>
-                   <option value="Slow">Slow</option>
-                   <option value="Normal">Normal</option>
-                   <option value="Fast">Fast</option>
-                   <option value="Very Fast">Very Fast</option>
+                   {TEMPO_OPTIONS.map(opt => (
+                     <option key={opt.value} value={opt.value}>{opt.label}</option>
+                   ))}
                  </select>
               </div>
             </div>
@@ -606,21 +616,25 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
              </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 relative">
             {/* Character 1 Select */}
             <div className="bg-[#212226] border border-[rgba(230,234,240,0.06)] p-5 rounded-[1.5rem] flex flex-col gap-3 relative overflow-hidden">
                <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
                <label className="text-[10px] font-bold text-[#B7BFD9] uppercase tracking-widest flex justify-between items-center">
-                 Agent Alpha
-                 {activeChar1.isCloned && <Mic className="w-3 h-3 text-emerald-400" />}
+                 <span>Agent Alpha</span>
+                 {activeChar1.isCloned ? (
+                   <span className="flex items-center gap-1 text-emerald-400 font-semibold"><Mic className="w-3 h-3" /> Cloned</span>
+                 ) : (
+                   <span className="text-[9px] text-[#707580] font-normal">{activeChar1.description}</span>
+                 )}
                </label>
                <select
                  value={char1Id}
                  onChange={(e) => setChar1Id(e.target.value)}
-                 className="w-full bg-[#121317] border border-[rgba(230,234,240,0.1)] text-sm font-medium text-white rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none"
+                 className="w-full bg-[#121317] border border-[rgba(230,234,240,0.1)] text-sm font-medium text-white rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none appearance-none cursor-pointer"
                >
                  {personas.map(p => (
-                   <option key={p.id} value={p.id}>{p.name}</option>
+                   <option key={p.id} value={p.id}>{p.name} ({p.baseVoice})</option>
                  ))}
                </select>
             </div>
@@ -629,16 +643,20 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
             <div className="bg-[#212226] border border-[rgba(230,234,240,0.06)] p-5 rounded-[1.5rem] flex flex-col gap-3 relative overflow-hidden">
                <div className="absolute top-0 left-0 w-1 h-full bg-cyan-400"></div>
                <label className="text-[10px] font-bold text-[#B7BFD9] uppercase tracking-widest flex justify-between items-center">
-                 Agent Beta
-                 {activeChar2.isCloned && <Mic className="w-3 h-3 text-emerald-400" />}
+                 <span>Agent Beta</span>
+                 {activeChar2.isCloned ? (
+                   <span className="flex items-center gap-1 text-emerald-400 font-semibold"><Mic className="w-3 h-3" /> Cloned</span>
+                 ) : (
+                   <span className="text-[9px] text-[#707580] font-normal">{activeChar2.description}</span>
+                 )}
                </label>
                <select
                  value={char2Id}
                  onChange={(e) => setChar2Id(e.target.value)}
-                 className="w-full bg-[#121317] border border-[rgba(230,234,240,0.1)] text-sm font-medium text-white rounded-xl p-3 focus:ring-2 focus:ring-cyan-400 outline-none appearance-none"
+                 className="w-full bg-[#121317] border border-[rgba(230,234,240,0.1)] text-sm font-medium text-white rounded-xl p-3 focus:ring-2 focus:ring-cyan-400 outline-none appearance-none cursor-pointer"
                >
                  {personas.map(p => (
-                   <option key={p.id} value={p.id}>{p.name}</option>
+                   <option key={p.id} value={p.id}>{p.name} ({p.baseVoice})</option>
                  ))}
                </select>
             </div>
@@ -687,30 +705,24 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
                         placeholder={`Input transmission for ${turn.speaker === 1 ? activeChar1.name : activeChar2.name}...`}
                       />
                       
-                      <div className="flex gap-2 mt-3 pt-3 border-t border-[rgba(230,234,240,0.06)] opacity-60 hover:opacity-100 transition-opacity">
+                      <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-[rgba(230,234,240,0.06)] opacity-75 hover:opacity-100 transition-opacity">
                         <select
                           value={turn.emotion || 'Neutral'}
                           onChange={(e) => updateTurnEmotion(turn.id, e.target.value)}
-                          className="bg-[#121317] border border-[rgba(230,234,240,0.1)] text-[10px] font-medium text-[#B7BFD9] rounded-full px-3 py-1.5 focus:ring-1 focus:ring-indigo-500 outline-none cursor-pointer appearance-none"
+                          className="bg-[#121317] border border-[rgba(230,234,240,0.1)] text-[11px] font-medium text-[#B7BFD9] rounded-full px-3 py-1.5 focus:ring-1 focus:ring-indigo-500 outline-none cursor-pointer appearance-none"
                         >
-                          <option value="Neutral">Neutral Tone</option>
-                          <option value="Cheerfully">Cheerful</option>
-                          <option value="Sadly">Sad</option>
-                          <option value="Angrily">Angry</option>
-                          <option value="Whispering">Whispering</option>
-                          <option value="Excitedly">Excited</option>
-                          <option value="Professionally">Professional</option>
+                          {EMOTION_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
                         </select>
                         <select
                           value={turn.tempo || 'Normal'}
                           onChange={(e) => updateTurnTempo(turn.id, e.target.value)}
-                          className="bg-[#121317] border border-[rgba(230,234,240,0.1)] text-[10px] font-medium text-[#B7BFD9] rounded-full px-3 py-1.5 focus:ring-1 focus:ring-cyan-400 outline-none cursor-pointer appearance-none"
+                          className="bg-[#121317] border border-[rgba(230,234,240,0.1)] text-[11px] font-medium text-[#B7BFD9] rounded-full px-3 py-1.5 focus:ring-1 focus:ring-cyan-400 outline-none cursor-pointer appearance-none"
                         >
-                          <option value="Very Slow">Very Slow</option>
-                          <option value="Slow">Slow</option>
-                          <option value="Normal">Normal Pace</option>
-                          <option value="Fast">Fast</option>
-                          <option value="Very Fast">Very Fast</option>
+                          {TEMPO_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
                         </select>
                       </div>
 
@@ -1122,23 +1134,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
                   <div>
                     <label className="block text-xs font-medium text-[#B7BFD9] mb-1.5">Emotion Matrix</label>
                     <select value={personaEmotion} onChange={(e) => setPersonaEmotion(e.target.value)} className="w-full bg-[#121317] border border-[rgba(230,234,240,0.1)] rounded-lg p-2.5 text-sm font-medium text-white focus:ring-2 focus:ring-[#3186FF]/50 outline-none appearance-none cursor-pointer">
-                      <option value="Neutral">Neutral</option>
-                      <option value="Cheerfully">Cheerful</option>
-                      <option value="Sadly">Sad</option>
-                      <option value="Angrily">Angry</option>
-                      <option value="Whispering">Whispering</option>
-                      <option value="Excitedly">Excited</option>
-                      <option value="Professionally">Professional</option>
+                      {EMOTION_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#B7BFD9] mb-1.5">Velocity</label>
+                    <label className="block text-xs font-medium text-[#B7BFD9] mb-1.5">Velocity / Tempo</label>
                     <select value={personaSpeed} onChange={(e) => setPersonaSpeed(e.target.value)} className="w-full bg-[#121317] border border-[rgba(230,234,240,0.1)] rounded-lg p-2.5 text-sm font-medium text-white focus:ring-2 focus:ring-[#3186FF]/50 outline-none appearance-none cursor-pointer">
-                      <option value="Very Slow">Very Slow</option>
-                      <option value="Slow">Slow</option>
-                      <option value="Normal">Normal</option>
-                      <option value="Fast">Fast</option>
-                      <option value="Very Fast">Very Fast</option>
+                      {TEMPO_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

@@ -27,7 +27,7 @@ export const setHfToken = (token: string): void => {
  */
 export const mapPersonaToBarkPrompt = (personaName: string = ''): string => {
   const name = personaName.toLowerCase();
-  if (name.includes('charon') || name.includes('authoritative') || name.includes('deep')) {
+  if (name.includes('charon') || name.includes('atlas') || name.includes('authoritative')) {
     return 'Announcer';
   }
   if (name.includes('kore') || name.includes('calm') || name.includes('soothing')) {
@@ -39,8 +39,26 @@ export const mapPersonaToBarkPrompt = (personaName: string = ''): string => {
   if (name.includes('zephyr')) {
     return 'Speaker 2 (en)';
   }
-  if (name.includes('fenrir')) {
+  if (name.includes('fenrir') || name.includes('strong')) {
     return 'Speaker 3 (en)';
+  }
+  if (name.includes('aoede') || name.includes('melodic')) {
+    return 'Speaker 4 (en)';
+  }
+  if (name.includes('orus') || name.includes('resonant')) {
+    return 'Speaker 5 (en)';
+  }
+  if (name.includes('leda') || name.includes('soft')) {
+    return 'Speaker 6 (en)';
+  }
+  if (name.includes('callirrhoe') || name.includes('theatrical')) {
+    return 'Speaker 7 (en)';
+  }
+  if (name.includes('nova') || name.includes('sharp')) {
+    return 'Speaker 8 (en)';
+  }
+  if (name.includes('echo') || name.includes('mysterious')) {
+    return 'Speaker 9 (en)';
   }
   return 'Speaker 1 (en)';
 };
@@ -50,10 +68,22 @@ export const mapPersonaToBarkPrompt = (personaName: string = ''): string => {
  */
 export const generateBarkSpeech = async (
   text: string,
-  personaName?: string
+  personaName?: string,
+  tempo?: string
 ): Promise<string> => {
   const prompt = mapPersonaToBarkPrompt(personaName);
   const token = getHfToken();
+
+  // Prepare text for Bark, adding hesitation/stutter cues if requested
+  let processedText = text;
+  if (tempo) {
+    const lower = tempo.toLowerCase();
+    if (lower.includes('stotter') || lower.includes('stutter')) {
+      processedText = `[hesitant] ${text}`;
+    } else if (lower.includes('hesitant')) {
+      processedText = `... ${text}`;
+    }
+  }
 
   try {
     const client = await Client.connect(BARK_SPACE_ID, {
@@ -61,7 +91,7 @@ export const generateBarkSpeech = async (
     });
 
     const result = await client.predict("/gen_tts", {
-      text: text,
+      text: processedText,
       history_prompt: prompt
     });
 
