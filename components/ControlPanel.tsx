@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Loader2, Sparkles, Volume2, Plus, X, Trash2, Mic, Square, Activity, MessageSquare, User, ArrowLeftRight, SlidersHorizontal, FileText, Upload, Save, FolderOpen, Clock, Edit2, ListOrdered, ListPlus } from 'lucide-react';
+import { Play, Loader2, Sparkles, Volume2, Plus, X, Trash2, Mic, Square, Activity, MessageSquare, User, ArrowLeftRight, SlidersHorizontal, FileText, Upload, Save, FolderOpen, Clock, Edit2, ListOrdered, ListPlus, BookOpen, Wand2 } from 'lucide-react';
 import { VoiceName, DEFAULT_PERSONAS, VoicePersona, DialogueTurn, SavedScene, BatchItem, EMOTION_OPTIONS, TEMPO_OPTIONS } from '../types';
 
 interface ControlPanelProps {
@@ -12,6 +12,69 @@ interface ControlPanelProps {
 
 type CloneState = 'idle' | 'recording' | 'recorded' | 'training';
 type AppMode = 'single' | 'dialogue' | 'transcribe' | 'batch';
+
+export const SOUND_FX_PILLS = [
+  { label: 'Laughs', tag: '[laughs]' },
+  { label: 'Sighs', tag: '[sighs]' },
+  { label: 'Whisper', tag: '[whispering]' },
+  { label: 'Clears throat', tag: '[clears throat]' },
+  { label: 'Pause 1s', tag: '[pause 1s]' },
+  { label: 'Stutter', tag: '[stutter]' }
+];
+
+export interface DialogueTemplate {
+  name: string;
+  description: string;
+  persona1Base: VoiceName;
+  persona2Base: VoiceName;
+  turns: { speaker: 1 | 2; text: string; emotion: string; tempo: string }[];
+}
+
+export const DIALOGUE_TEMPLATES: DialogueTemplate[] = [
+  {
+    name: 'Tech Podcast',
+    description: 'Dynamic host & guest discussion on breakthrough neural audio',
+    persona1Base: VoiceName.Puck,
+    persona2Base: VoiceName.Kore,
+    turns: [
+      { speaker: 1, text: "Welcome back to Deep Tech! Today we are testing real-time neural speech synthesis.", emotion: 'Excitedly', tempo: 'Fast' },
+      { speaker: 2, text: "The turnaround latency is astonishing. It feels remarkably natural to converse.", emotion: 'Professionally', tempo: 'Normal' },
+      { speaker: 1, text: "Wait till you hear the stutter and stage directions — listen to this!", emotion: 'Playful', tempo: 'Fast' }
+    ]
+  },
+  {
+    name: 'Comedy & Stutter',
+    description: 'Playful banter with nervous hesitation, laughter, and comedic timing',
+    persona1Base: VoiceName.Fenrir,
+    persona2Base: VoiceName.Zephyr,
+    turns: [
+      { speaker: 1, text: "D-did you really think bringing a live llama into the recording studio was a good idea?!", emotion: 'Shocked', tempo: 'Stuttering' },
+      { speaker: 2, text: "[laughs] Hey, you specifically asked for an unforgettable episode, didn't you?", emotion: 'Playful', tempo: 'Normal' },
+      { speaker: 1, text: "[sighs] Well, it's definitely unforgettable. It just ate my soundboard cables.", emotion: 'Disappointed', tempo: 'Hesitant' }
+    ]
+  },
+  {
+    name: 'Breaking News',
+    description: 'Authoritative news anchors broadcasting mission-critical alerts',
+    persona1Base: VoiceName.Charon,
+    persona2Base: VoiceName.Aoede,
+    turns: [
+      { speaker: 1, text: "We interrupt this broadcast with breaking telemetry from Mission Operations.", emotion: 'Authoritative', tempo: 'Normal' },
+      { speaker: 2, text: "[clears throat] Station 9 confirms all primary signals have re-engaged. We are back online.", emotion: 'Relieved', tempo: 'Normal' }
+    ]
+  },
+  {
+    name: 'Quantum Support',
+    description: 'Patient specialist troubleshooting an interstellar propulsion glitch',
+    persona1Base: VoiceName.Kore,
+    persona2Base: VoiceName.Puck,
+    turns: [
+      { speaker: 1, text: "Thank you for reaching Quantum Cloud support. How can I assist your deployment today?", emotion: 'Friendly', tempo: 'Normal' },
+      { speaker: 2, text: "[sighs] My hyperdrive pipeline keeps stalling at step three...", emotion: 'Worried', tempo: 'Hesitant' },
+      { speaker: 1, text: "Don't worry, we will patch that sublight configuration right away.", emotion: 'Reassuring', tempo: 'Normal' }
+    ]
+  }
+];
 
 const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerateDialogue, onGenerateBatch, onTranscribe, isLoading }) => {
   // App Mode State
@@ -70,6 +133,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
   });
   const [showSaveSceneModal, setShowSaveSceneModal] = useState(false);
   const [showLoadSceneModal, setShowLoadSceneModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [saveSceneName, setSaveSceneName] = useState('');
 
   // Transcribe State
@@ -246,6 +310,38 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
 
   const swapTurnSpeaker = (id: string) => {
     setDialogueTurns(dialogueTurns.map(t => t.id === id ? { ...t, speaker: t.speaker === 1 ? 2 : 1 } : t));
+  };
+
+  // Sound FX insertion helpers
+  const insertSoundFx = (tag: string) => {
+    setText(prev => (prev.trim() ? `${prev.trim()} ${tag} ` : `${tag} `));
+  };
+
+  const insertTurnSoundFx = (turnId: string, tag: string) => {
+    setDialogueTurns(prev => prev.map(turn => {
+      if (turn.id !== turnId) return turn;
+      const trimmed = turn.text.trim();
+      return {
+        ...turn,
+        text: trimmed ? `${trimmed} ${tag} ` : `${tag} `
+      };
+    }));
+  };
+
+  const applyDialogueTemplate = (template: DialogueTemplate) => {
+    const char1 = personas.find(p => p.baseVoice === template.persona1Base) || personas[0];
+    const char2 = personas.find(p => p.baseVoice === template.persona2Base && p.id !== char1.id) || personas[1] || personas[0];
+
+    setChar1Id(char1.id);
+    setChar2Id(char2.id);
+    setDialogueTurns(template.turns.map((t, idx) => ({
+      id: `${Date.now()}-${idx}`,
+      speaker: t.speaker,
+      text: t.text,
+      emotion: t.emotion,
+      tempo: t.tempo
+    })));
+    setShowTemplateModal(false);
   };
 
   // --- Scene Save/Load Handlers ---
@@ -575,10 +671,29 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
           </div>
 
           <div className="mb-8">
-            <label className="block text-sm font-semibold text-[#E6EAF0] mb-3 flex items-center gap-2 uppercase tracking-widest">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              Agent Prompt
-            </label>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <label className="text-sm font-semibold text-[#E6EAF0] flex items-center gap-2 uppercase tracking-widest">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                Agent Prompt
+              </label>
+
+              {/* Sound FX & Stage Directions */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] text-[#707580] uppercase tracking-wider font-semibold mr-1">Insert FX:</span>
+                {SOUND_FX_PILLS.map(pill => (
+                  <button
+                    key={pill.tag}
+                    type="button"
+                    onClick={() => insertSoundFx(pill.tag)}
+                    className="px-2.5 py-1 rounded-full text-xs font-mono bg-white/[0.04] hover:bg-white/[0.1] text-[#B7BFD9] hover:text-white border border-white/[0.08] transition-all"
+                    title={`Insert ${pill.tag} tag`}
+                  >
+                    {pill.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -598,17 +713,24 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
                <MessageSquare className="w-4 h-4 text-[#3186FF]" />
                Mission Control
              </label>
-             <div className="flex gap-2">
+             <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setShowTemplateModal(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 transition-all shadow-sm"
+                >
+                  <Wand2 className="w-3.5 h-3.5 text-indigo-400" />
+                  Presets
+                </button>
                 <button 
                   onClick={() => setShowLoadSceneModal(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-[#B7BFD9] hover:text-white bg-[rgba(230,234,240,0.03)] hover:bg-[rgba(230,234,240,0.08)] transition-all"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#B7BFD9] hover:text-white bg-[rgba(230,234,240,0.03)] hover:bg-[rgba(230,234,240,0.08)] transition-all"
                 >
                   <FolderOpen className="w-3.5 h-3.5" />
                   Load
                 </button>
                 <button 
                   onClick={() => setShowSaveSceneModal(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold text-[#121317] hover:bg-white bg-[#E6EAF0] transition-all shadow-sm"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#121317] hover:bg-white bg-[#E6EAF0] transition-all shadow-sm"
                 >
                   <Save className="w-3.5 h-3.5" />
                   Save
@@ -704,6 +826,22 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
                         className="w-full bg-[#18191D]/50 text-base text-white p-4 rounded-xl border border-[rgba(230,234,240,0.06)] focus:outline-none focus:border-[#45474D] resize-none min-h-[80px] font-light"
                         placeholder={`Input transmission for ${turn.speaker === 1 ? activeChar1.name : activeChar2.name}...`}
                       />
+
+                      {/* Turn FX quick pills */}
+                      <div className="flex flex-wrap items-center gap-1 mt-2">
+                        <span className="text-[9px] uppercase tracking-wider text-[#707580] font-semibold mr-1">FX:</span>
+                        {SOUND_FX_PILLS.map(pill => (
+                          <button
+                            key={pill.tag}
+                            type="button"
+                            onClick={() => insertTurnSoundFx(turn.id, pill.tag)}
+                            className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/[0.04] hover:bg-white/[0.1] text-[#B7BFD9] hover:text-white border border-white/[0.06] transition-all"
+                            title={`Insert ${pill.tag}`}
+                          >
+                            {pill.label}
+                          </button>
+                        ))}
+                      </div>
                       
                       <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-[rgba(230,234,240,0.06)] opacity-75 hover:opacity-100 transition-opacity">
                         <select
@@ -1041,6 +1179,67 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dialogue Presets / Templates Modal */}
+      {showTemplateModal && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center p-4 bg-[#121317]/85 backdrop-blur-md rounded-[2rem] animate-in fade-in duration-200">
+          <div className="bg-[#18191D] border border-white/[0.1] rounded-[1.75rem] p-7 w-full max-w-lg shadow-[0_32px_80px_rgba(0,0,0,0.6)] relative flex flex-col max-h-[85%]">
+            <button 
+              onClick={() => setShowTemplateModal(false)} 
+              className="absolute top-5 right-5 text-[#B7BFD9] hover:text-white p-1 rounded-full hover:bg-white/[0.06] transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <div className="mb-5">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-1">
+                <Wand2 className="w-5 h-5 text-indigo-400" /> 
+                Dialogue Presets
+              </h3>
+              <p className="text-xs text-[#8f929b]">
+                Select a pre-configured multi-speaker scene with expressive emotions and sound FX.
+              </p>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-[#45474D]">
+              {DIALOGUE_TEMPLATES.map((tpl) => (
+                <div 
+                  key={tpl.name}
+                  onClick={() => applyDialogueTemplate(tpl)}
+                  className="group bg-[#212226] border border-white/[0.06] hover:border-indigo-500/50 p-4 rounded-2xl flex flex-col gap-2 hover:bg-[#282a30] transition-all cursor-pointer relative overflow-hidden"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">
+                      {tpl.name}
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-[#A8ABB3] border border-white/[0.08]">
+                      {tpl.persona1Base} & {tpl.persona2Base}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-[#8f929b] leading-relaxed">
+                    {tpl.description}
+                  </p>
+
+                  <div className="mt-1 pt-2 border-t border-white/[0.04] text-[11px] text-[#A8ABB3]/80 italic truncate font-light">
+                    "{tpl.turns[0].text}"
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-4 mt-2 border-t border-white/[0.06] flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowTemplateModal(false)}
+                className="px-5 py-2 rounded-full text-xs font-semibold text-[#B7BFD9] hover:text-white bg-white/[0.05] hover:bg-white/[0.1] transition-all"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

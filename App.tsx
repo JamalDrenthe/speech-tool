@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ControlPanel from './components/ControlPanel';
 import Header from './components/Header';
 import StaticWaveform from './components/StaticWaveform';
 import { generateSpeech, generateDialogue, transcribeMedia } from './services/geminiService';
 import { decodeBase64, decodeAudioData, bufferToWav, analyzeAudioBuffer } from './utils/audioUtils';
 import { VoicePersona, AudioState, DialogueTurn, BatchItem } from './types';
-import { Download, Play, Pause, RotateCcw, Volume2, AlertCircle } from 'lucide-react';
+import { Download, Play, Pause, RotateCcw, Volume2, AlertCircle, Repeat, Gauge, Sparkles, Command } from 'lucide-react';
 
 const App: React.FC = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => (
@@ -22,6 +22,8 @@ const App: React.FC = () => {
   });
 
   const [currentTime, setCurrentTime] = useState(0);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
+  const [isLooping, setIsLooping] = useState<boolean>(false);
 
   // Audio Context Refs
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -286,26 +288,55 @@ const App: React.FC = () => {
     await processAndPlayAudioBytes(rawBytes);
   };
 
-  const playAudio = async () => {
+  const playAudio = useCallback(async (startOffset?: number) => {
     if (!audioState.buffer || !audioContextRef.current) return;
 
     if (audioContextRef.current.state === 'suspended') {
       await audioContextRef.current.resume();
     }
 
+    if (sourceNodeRef.current) {
+      try {
+        sourceNodeRef.current.stop();
+      } catch (e) {}
+      sourceNodeRef.current = null;
+    }
+
     const source = audioContextRef.current.createBufferSource();
     source.buffer = audioState.buffer;
+    source.playbackRate.value = playbackSpeed;
+    source.loop = isLooping;
     
     source.connect(audioContextRef.current.destination);
 
-    const offset = pausedAtRef.current;
+    const offset = typeof startOffset === 'number' ? startOffset : pausedAtRef.current;
     source.start(0, offset);
     
-    startTimeRef.current = audioContextRef.current.currentTime - offset;
+    startTimeRef.current = audioContextRef.current.currentTime - (offset / playbackSpeed);
     sourceNodeRef.current = source;
 
     setAudioState(prev => ({ ...prev, isPlaying: true }));
-  };
+  }, [audioState.buffer, playbackSpeed, isLooping]);
+
+  const handleSeek = useCallback((time: number) => {
+    if (!audioState.buffer || !audioContextRef.current) return;
+    const clampedTime = Math.max(0, Math.min(time, audioState.buffer.duration));
+    const wasPlaying = audioState.isPlaying;
+
+    if (sourceNodeRef.current) {
+      try {
+        sourceNodeRef.current.stop();
+      } catch (e) {}
+      sourceNodeRef.current = null;
+    }
+
+    pausedAtRef.current = clampedTime;
+    setCurrentTime(clampedTime);
+
+    if (wasPlaying) {
+      playAudio(clampedTime);
+    }
+  }, [audioState.buffer, audioState.isPlaying, playAudio]);
 
   const pauseAudio = () => {
     if (sourceNodeRef.current && audioContextRef.current) {
@@ -329,6 +360,57 @@ const App: React.FC = () => {
     setCurrentTime(0);
     setAudioState(prev => ({ ...prev, isPlaying: false }));
   };
+
+  const changeSpeed = (speed: number) => {
+    setPlaybackSpeed(speed);
+    if (sourceNodeRef.current && audioState.isPlaying && audioContextRef.current) {
+      sourceNodeRef.current.playbackRate.value = speed;
+      startTimeRef.current = audioContextRef.current.currentTime - (currentTime / speed);
+    }
+  };
+
+  const toggleLoop = () => {
+    setIsLooping(prev => {
+      const next = !prev;
+      if (sourceNodeRef.current) {
+        sourceNodeRef.current.loop = next;
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        const primaryBtn = document.getElementById('primary-generate-btn');
+        primaryBtn?.click();
+        return;
+      }
+
+      if (isInput) return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (audioState.isPlaying) {
+          pauseAudio();
+        } else if (audioState.buffer) {
+          playAudio();
+        }
+      }
+
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        stopAudio();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [audioState.isPlaying, audioState.buffer, playAudio]);
 
   const handleDownload = () => {
     if (!audioState.buffer) return;
@@ -432,35 +514,92 @@ const App: React.FC = () => {
                 )}
 
                 {audioState.buffer && !audioState.isLoading && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <StaticWaveform buffer={audioState.buffer} currentTime={currentTime} />
+                  <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <StaticWaveform 
+                      buffer={audioState.buffer} 
+                      currentTime={currentTime} 
+                      duration={audioState.duration}
+                      isPlaying={audioState.isPlaying}
+                      onSeek={handleSeek}
+                    />
                     
                     <div className="space-y-2 px-1">
                       <div className="flex justify-between text-xs text-[#B7BFD9] font-mono font-medium">
                         <span>{formatTime(currentTime)}</span>
-                        <span>{formatTime(audioState.duration)}</span>
+                        <div className="flex items-center gap-2">
+                          {isLooping && (
+                            <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                              Loop on
+                            </span>
+                          )}
+                          <span>{formatTime(audioState.duration)}</span>
+                        </div>
                       </div>
-                      {/* Simple progress bar track */}
-                      <div className="w-full h-1 bg-[#2F3034] rounded-full overflow-hidden">
+                      {/* Interactive / progress bar track */}
+                      <div 
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                          handleSeek(ratio * audioState.duration);
+                        }}
+                        className="w-full h-1.5 bg-[#2F3034] rounded-full overflow-hidden cursor-pointer relative group/track"
+                        title="Click to seek"
+                      >
                         <div 
-                          className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 transition-all duration-75 ease-linear"
-                          style={{ width: `${(currentTime / audioState.duration) * 100}%`, '--progress-width': `${(currentTime / audioState.duration) * 100}%` } as React.CSSProperties}
+                          className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 transition-all duration-75 ease-linear group-hover/track:brightness-125"
+                          style={{ width: `${(currentTime / (audioState.duration || 1)) * 100}%` }}
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 pt-2">
+                    {/* Speed Selector Pills */}
+                    <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] rounded-xl p-1.5">
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#8f929b] pl-2 uppercase tracking-wider">
+                        <Gauge className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Speed</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {[0.75, 1.0, 1.25, 1.5, 2.0].map((speed) => (
+                          <button
+                            key={speed}
+                            onClick={() => changeSpeed(speed)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold transition-all ${
+                              playbackSpeed === speed
+                                ? 'bg-white/15 text-white shadow-sm border border-white/20'
+                                : 'text-[#8f929b] hover:text-white hover:bg-white/[0.05]'
+                            }`}
+                          >
+                            {speed}x
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 pt-1">
                       <button
-                        onClick={audioState.isPlaying ? pauseAudio : playAudio}
-                        className="btn-primary"
+                        onClick={audioState.isPlaying ? pauseAudio : () => playAudio(currentTime)}
+                        className="btn-primary col-span-1"
+                        title="Spacebar to toggle"
                       >
                         {audioState.isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
                         {audioState.isPlaying ? 'Pause' : 'Play'}
                       </button>
                       
                       <button
+                        onClick={toggleLoop}
+                        className={`btn-secondary flex items-center justify-center gap-1.5 transition-all ${
+                          isLooping ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' : ''
+                        }`}
+                        title="Toggle continuous looping"
+                      >
+                        <Repeat className={`w-4 h-4 ${isLooping ? 'text-indigo-400 animate-spin-slow' : ''}`} />
+                        Loop
+                      </button>
+
+                      <button
                         onClick={stopAudio}
-                        className="btn-secondary"
+                        className="btn-secondary flex items-center justify-center gap-1.5"
+                        title="Reset playback (R key)"
                       >
                         <RotateCcw className="w-4 h-4" />
                         Reset
@@ -469,11 +608,24 @@ const App: React.FC = () => {
 
                     <button
                       onClick={handleDownload}
-                      className="btn-ghost"
+                      className="btn-ghost w-full"
                     >
                       <Download className="w-4 h-4" />
                       Download WAV Artifact
                     </button>
+
+                    {/* Keyboard shortcuts subtle hints */}
+                    <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between text-[10px] text-[#6d717b] font-mono">
+                      <span className="flex items-center gap-1">
+                        <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] text-[#A8ABB3] border border-white/[0.08]">Space</kbd> Play
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] text-[#A8ABB3] border border-white/[0.08]">R</kbd> Reset
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <kbd className="px-1.5 py-0.5 rounded bg-white/[0.06] text-[#A8ABB3] border border-white/[0.08]">⌘+Enter</kbd> Synthesize
+                      </span>
+                    </div>
                   </div>
                 )}
 
