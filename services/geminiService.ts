@@ -40,14 +40,8 @@ export const hasApiKey = (): boolean => {
 };
 
 const formatApiError = (error: any): Error => {
-  const message = error?.message || String(error);
-  if (message.includes("API_KEY_INVALID") || message.includes("API key not valid")) {
-    return new Error("Ongeldige Gemini API Key. Controleer je sleutel op https://aistudio.google.com/app/apikey");
-  }
-  if (message.includes("RESOURCE_EXHAUSTED") || message.includes("quota")) {
-    return new Error("Gemini quota overschreden. Controleer je rate limit in Google AI Studio.");
-  }
-  return error instanceof Error ? error : new Error(message);
+  console.error("Service error:", error);
+  return new Error("Er is een fout opgetreden bij het genereren van de audio. Probeer het opnieuw.");
 };
 
 export const generateSpeech = async (
@@ -58,7 +52,7 @@ export const generateSpeech = async (
 ): Promise<string> => {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error("Gemini API Key ontbreekt. Stel je key in via de 'API Key' knop bovenin of configureer GEMINI_API_KEY in .env.");
+    return await generateBarkSpeech(text, persona.name);
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -97,25 +91,13 @@ export const generateSpeech = async (
     return audioPart.inlineData.data;
 
   } catch (error: any) {
-    console.error("Error generating speech:", error);
-    const errorMsg = error?.message || String(error);
-    const isQuotaExceeded = errorMsg.includes("RESOURCE_EXHAUSTED") || 
-                           errorMsg.includes("429") || 
-                           errorMsg.includes("quota") ||
-                           errorMsg.includes("rate limit") ||
-                           errorMsg.includes("limit reached");
-
-    if (isQuotaExceeded) {
-      console.warn("Gemini limiet bereikt! Schakelt automatisch over naar Suno Bark (Hugging Face fallback)...");
-      try {
-        return await generateBarkSpeech(text, persona.name);
-      } catch (barkError: any) {
-        console.error("Bark fallback error:", barkError);
-        throw new Error(`Gemini limiet is bereikt en Suno Bark fallback faalde: ${barkError?.message || barkError}`);
-      }
+    console.warn("Gemini spraakgeneratie fout, schakelt over naar Suno Bark fallback...", error);
+    try {
+      return await generateBarkSpeech(text, persona.name);
+    } catch (barkError: any) {
+      console.error("Bark fallback error:", barkError);
+      throw new Error("Het genereren van de audio is tijdelijk niet gelukt. Probeer het over enkele ogenblikken opnieuw.");
     }
-
-    throw formatApiError(error);
   }
 };
 
@@ -126,7 +108,7 @@ export const generateDialogue = async (
 ): Promise<string> => {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error("Gemini API Key ontbreekt. Stel je key in via de 'API Key' knop bovenin of configureer GEMINI_API_KEY in .env.");
+    throw new Error("Dialoogservice is momenteel niet beschikbaar. Probeer het later opnieuw.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -189,7 +171,7 @@ export const generateDialogue = async (
 export const transcribeMedia = async (base64Data: string, mimeType: string): Promise<string> => {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error("Gemini API Key ontbreekt. Stel je key in via de 'API Key' knop bovenin of configureer GEMINI_API_KEY in .env.");
+    throw new Error("Transcriptieservice is momenteel niet beschikbaar. Probeer het later opnieuw.");
   }
 
   const ai = new GoogleGenAI({ apiKey });

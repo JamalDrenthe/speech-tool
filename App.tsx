@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ControlPanel from './components/ControlPanel';
 import Header from './components/Header';
-import ApiKeyModal from './components/ApiKeyModal';
 import StaticWaveform from './components/StaticWaveform';
-import { generateSpeech, generateDialogue, transcribeMedia, hasApiKey } from './services/geminiService';
+import { generateSpeech, generateDialogue, transcribeMedia } from './services/geminiService';
 import { decodeBase64, decodeAudioData, bufferToWav, analyzeAudioBuffer } from './utils/audioUtils';
 import { VoicePersona, AudioState, DialogueTurn, BatchItem } from './types';
-import { Download, Play, Pause, RotateCcw, Volume2, AlertCircle, Key } from 'lucide-react';
+import { Download, Play, Pause, RotateCcw, Volume2, AlertCircle } from 'lucide-react';
 
 const App: React.FC = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => (
@@ -23,8 +22,6 @@ const App: React.FC = () => {
   });
 
   const [currentTime, setCurrentTime] = useState(0);
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
-  const [isKeyConfigured, setIsKeyConfigured] = useState<boolean>(() => hasApiKey());
 
   // Audio Context Refs
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -365,12 +362,7 @@ const App: React.FC = () => {
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#101114]/35 to-[#090a0c]/95 pointer-events-none"></div>
       
       <div className="relative z-10">
-        <Header 
-          theme={theme} 
-          onToggleTheme={toggleTheme} 
-          onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
-          hasApiKey={isKeyConfigured}
-        />
+        <Header theme={theme} onToggleTheme={toggleTheme} />
         <section className="flex flex-col items-center justify-center pt-36 pb-16 px-4 text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#a8abb3] backdrop-blur-md">
             <span className="h-1.5 w-1.5 rounded-full bg-[#5b9cff]" />
@@ -403,19 +395,9 @@ const App: React.FC = () => {
               />
 
               {audioState.error && (
-                <div className="bg-[#FC413D]/10 border border-[#FC413D]/30 p-4 rounded-2xl flex items-center justify-between gap-3 text-[#FC413D] backdrop-blur-md">
-                  <div className="flex items-center gap-3">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                    <p className="text-sm font-medium">{audioState.error}</p>
-                  </div>
-                  {audioState.error.toLowerCase().includes('key') && (
-                    <button
-                      onClick={() => setIsApiKeyModalOpen(true)}
-                      className="px-3 py-1.5 rounded-lg bg-[#FC413D]/20 hover:bg-[#FC413D]/30 border border-[#FC413D]/40 text-xs font-semibold text-white transition-colors whitespace-nowrap cursor-pointer"
-                    >
-                      Key Instellen
-                    </button>
-                  )}
+                <div className="bg-[#FC413D]/10 border border-[#FC413D]/30 p-4 rounded-2xl flex items-center gap-3 text-[#FC413D] backdrop-blur-md">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <p className="text-sm font-medium">{audioState.error}</p>
                 </div>
               )}
             </div>
@@ -516,12 +498,6 @@ const App: React.FC = () => {
           </div>
         </main>
       </div>
-
-      <ApiKeyModal
-        isOpen={isApiKeyModalOpen}
-        onClose={() => setIsApiKeyModalOpen(false)}
-        onKeyUpdated={() => setIsKeyConfigured(hasApiKey())}
-      />
     </div>
   );
 };

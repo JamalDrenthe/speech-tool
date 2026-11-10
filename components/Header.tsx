@@ -1,14 +1,12 @@
 import React from 'react';
-import { Moon, Sun, Key } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 
 interface HeaderProps {
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
-  onOpenApiKeyModal?: () => void;
-  hasApiKey?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onOpenApiKeyModal, hasApiKey }) => {
+const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme }) => {
   return (
     <header className="py-5 fixed top-0 left-0 right-0 z-40">
       <div className="mx-auto max-w-7xl px-5 md:px-10 flex items-center justify-between">
@@ -24,20 +22,6 @@ const Header: React.FC<HeaderProps> = ({ theme, onToggleTheme, onOpenApiKeyModal
         </div>
 
         <div className="flex items-center gap-3 text-xs text-[#8e929c]">
-          <button
-            type="button"
-            onClick={onOpenApiKeyModal}
-            className="glass-control inline-flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium hover:text-white transition-all cursor-pointer"
-            title="Configureer Google Gemini API Key"
-          >
-            <Key className="w-3.5 h-3.5 text-[#5b9cff]" />
-            <span className="hidden sm:inline">API Key</span>
-            <span 
-              className={`w-2 h-2 rounded-full ${hasApiKey ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`}
-              title={hasApiKey ? 'Gemini API key is geconfigureerd' : 'Geen API key gevonden'}
-            />
-          </button>
-
           <span className="hidden sm:inline-flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#63d7a4]" />
             Ready
