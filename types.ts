@@ -122,3 +122,12 @@ export interface BatchItemDialogue {
 }
 
 export type BatchItem = BatchItemSingle | BatchItemDialogue;
+
+export type TranscribeMode = 'verbatim' | 'clean' | 'summary' | 'srt';
+
+export interface TranscribeOptions {
+  mode: TranscribeMode;
+  timestamps: boolean;
+  speakerDiarization: boolean;
+  targetLanguage: 'auto' | 'nl' | 'en';
+}

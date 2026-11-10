@@ -4,7 +4,7 @@ import Header from './components/Header';
 import StaticWaveform from './components/StaticWaveform';
 import { generateSpeech, generateDialogue, transcribeMedia } from './services/geminiService';
 import { decodeBase64, decodeAudioData, bufferToWav, analyzeAudioBuffer } from './utils/audioUtils';
-import { VoicePersona, AudioState, DialogueTurn, BatchItem } from './types';
+import { VoicePersona, AudioState, DialogueTurn, BatchItem, TranscribeOptions } from './types';
 import { Download, Play, Pause, RotateCcw, Volume2, AlertCircle, Repeat, Gauge, Sparkles, Command } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -243,14 +243,14 @@ const App: React.FC = () => {
     }
   };
 
-  const handleTranscribe = async (file: File): Promise<string> => {
+  const handleTranscribe = async (file: File, options?: TranscribeOptions): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = async () => {
         try {
           const resultStr = reader.result as string;
           const base64Data = resultStr.split(',')[1];
-          const result = await transcribeMedia(base64Data, file.type);
+          const result = await transcribeMedia(base64Data, file.type, options);
           resolve(result);
         } catch (err) {
           reject(err);

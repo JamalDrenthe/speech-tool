@@ -1,5 +1,5 @@
 import { GoogleGenAI, Modality } from "@google/genai";
-import { VoicePersona, DialogueTurn } from "../types";
+import { VoicePersona, DialogueTurn, TranscribeOptions } from "../types";
 import { generateBarkSpeech } from "./barkService";
 
 // Standard default key provided for SpeechOS (encoded to avoid repo false-positives)
@@ -209,13 +209,75 @@ export const generateDialogue = async (
   }
 };
 
-export const transcribeMedia = async (base64Data: string, mimeType: string): Promise<string> => {
+export const transcribeMedia = async (
+  base64Data: string, 
+  mimeType: string,
+  options?: TranscribeOptions
+): Promise<string> => {
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error("Transcriptieservice is momenteel niet beschikbaar. Probeer het later opnieuw.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
+
+  const mode = options?.mode || 'verbatim';
+  const includeTimestamps = options?.timestamps !== false;
+  const includeDiarization = options?.speakerDiarization !== false;
+  const targetLanguage = options?.targetLanguage || 'auto';
+
+  // Construct specialized instruction prompt based on requested mode
+  let instructionPrompt = "";
+
+  if (mode === 'verbatim') {
+    instructionPrompt = `You are an elite, audio forensic transcription specialist.
+Provide a highly accurate, verbatim word-for-word transcript of the provided audio or video media.
+Guidelines:
+${includeTimestamps ? "- Include timestamps in format [MM:SS] at the beginning of each turn or significant pause." : "- Do not include timestamps."}
+${includeDiarization ? "- Identify distinct speakers clearly (e.g. 'Speaker 1:', 'Speaker 2:', or use their actual names if explicitly mentioned)." : "- Format as continuous spoken flow."}
+- Capture and tag audible stage reactions in square brackets: [laughs], [sighs], [whispering], [clears throat], [pause 1s], [stutter].
+- Preserve exact wording, false starts, and hesitations without smoothing them out.`;
+  } else if (mode === 'clean') {
+    instructionPrompt = `You are a professional editorial transcriptionist.
+Provide a polished, crystal-clear, grammatical transcript of the provided audio or video.
+Guidelines:
+- Remove verbal filler words ('um', 'uh', 'you know', 'like', 'sort of'), stuttering, and false starts.
+- Fix broken grammar while fully respecting the speaker's original intent and tone.
+${includeDiarization ? "- Retain speaker labels (e.g. 'Speaker 1:', 'Speaker 2:')." : ""}
+- Organize into well-structured, readable paragraphs.`;
+  } else if (mode === 'summary') {
+    instructionPrompt = `You are an executive intelligence analyst.
+Analyze the provided audio or video recording thoroughly and return an executive intelligence report formatted in Markdown:
+1. # Executive Summary (2-3 paragraphs explaining the core premise and outcomes).
+2. ## Key Takeaways & Topics (Bulleted breakdown of essential insights).
+3. ## Decisions & Action Items (Numbered list of actionable next steps, with assigned names/roles if identified).
+4. ## Notable Quotes (Key statements made during the transmission).`;
+  } else if (mode === 'srt') {
+    instructionPrompt = `You are a professional subtitle and closed-captioning engineer.
+Generate a valid, syntactically perfect SubRip Subtitle (.srt) file based on the spoken audio.
+Format requirements:
+1
+00:00:01,000 --> 00:00:04,500
+Subtitle text here...
+
+2
+00:00:05,000 --> 00:00:08,200
+Next subtitle line...
+
+Important:
+- Keep subtitle lines concise (max 38 characters per line, max 2 lines per cue).
+- Output ONLY the raw SRT format lines. Do not wrap in markdown code blocks (\`\`\`srt).`;
+  }
+
+  if (targetLanguage === 'nl') {
+    instructionPrompt += `\n\nLanguage Directive: Translate the entire resulting transcript/report into natural, professional Dutch (Nederlands).`;
+  } else if (targetLanguage === 'en') {
+    instructionPrompt += `\n\nLanguage Directive: Translate the entire resulting transcript/report into fluent, professional English.`;
+  } else {
+    instructionPrompt += `\n\nLanguage Directive: Transcribe in the original spoken language of the audio (e.g. Dutch if Dutch, English if English).`;
+  }
+
+  instructionPrompt += `\n\nReturn clean text with no additional introductory commentary.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -229,7 +291,7 @@ export const transcribeMedia = async (base64Data: string, mimeType: string): Pro
             },
           },
           {
-            text: "Please provide a highly accurate, verbatim text transcription of the audio or video provided. Include speaker labels if there are multiple speakers (e.g., Speaker 1:, Speaker 2:). Return only the transcription text.",
+            text: instructionPrompt,
           },
         ],
       },

@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Loader2, Sparkles, Volume2, Plus, X, Trash2, Mic, Square, Activity, MessageSquare, User, ArrowLeftRight, SlidersHorizontal, FileText, Upload, Save, FolderOpen, Clock, Edit2, ListOrdered, ListPlus, BookOpen, Wand2 } from 'lucide-react';
-import { VoiceName, DEFAULT_PERSONAS, VoicePersona, DialogueTurn, SavedScene, BatchItem, EMOTION_OPTIONS, TEMPO_OPTIONS } from '../types';
+import { 
+  Play, Pause, Loader2, Sparkles, Volume2, Plus, X, Trash2, Mic, Square, Activity, 
+  MessageSquare, User, ArrowLeftRight, SlidersHorizontal, FileText, Upload, Save, 
+  FolderOpen, Clock, Edit2, ListOrdered, ListPlus, BookOpen, Wand2, Copy, Check, 
+  Download, Languages, FileCheck, Timer, Share2, RotateCcw
+} from 'lucide-react';
+import { 
+  VoiceName, DEFAULT_PERSONAS, VoicePersona, DialogueTurn, SavedScene, BatchItem, 
+  EMOTION_OPTIONS, TEMPO_OPTIONS, TranscribeMode, TranscribeOptions 
+} from '../types';
 
 interface ControlPanelProps {
   onGenerateSingle: (text: string, persona: VoicePersona, emotion: string, tempo: string) => void;
   onGenerateDialogue: (turns: DialogueTurn[], persona1: VoicePersona, persona2: VoicePersona) => void;
   onGenerateBatch: (queue: BatchItem[]) => void;
-  onTranscribe?: (file: File) => Promise<string>;
+  onTranscribe?: (file: File, options?: TranscribeOptions) => Promise<string>;
   isLoading: boolean;
 }
 
@@ -143,11 +151,47 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcribeError, setTranscribeError] = useState('');
   
+  // Pro Transcribe Configurations
+  const [transcribeMode, setTranscribeMode] = useState<TranscribeMode>('verbatim');
+  const [transcribeLanguage, setTranscribeLanguage] = useState<'auto' | 'nl' | 'en'>('auto');
+  const [transcribeTimestamps, setTranscribeTimestamps] = useState<boolean>(true);
+  const [transcribeDiarization, setTranscribeDiarization] = useState<boolean>(true);
+  const [copiedToClipboard, setCopiedToClipboard] = useState<boolean>(false);
+
+  // Audio Preview & Live Recording Timer State
+  const [previewAudioUrl, setPreviewAudioUrl] = useState<string | null>(null);
+  const [previewIsPlaying, setPreviewIsPlaying] = useState<boolean>(false);
+  const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
+  const recordingTimerRef = useRef<any>(null);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  
   // Transcribe Recording State
   const [transcribeRecordState, setTranscribeRecordState] = useState<'idle' | 'recording' | 'recorded'>('idle');
   const [recordedFile, setRecordedFile] = useState<File | null>(null);
   const transcribeRecorderRef = useRef<MediaRecorder | null>(null);
   const transcribeChunksRef = useRef<BlobPart[]>([]);
+
+  // Manage Preview Audio URL lifecycle
+  useEffect(() => {
+    const activeFile = transcribeInputMode === 'upload' ? selectedFile : recordedFile;
+    if (activeFile) {
+      const url = URL.createObjectURL(activeFile);
+      setPreviewAudioUrl(url);
+      setPreviewIsPlaying(false);
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setPreviewAudioUrl(null);
+      setPreviewIsPlaying(false);
+    }
+  }, [selectedFile, recordedFile, transcribeInputMode]);
+
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    };
+  }, []);
 
   // Forms State
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -234,7 +278,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
     setIsTranscribing(true);
     setTranscribeError('');
     try {
-      const result = await onTranscribe(fileToTranscribe);
+      const result = await onTranscribe(fileToTranscribe, {
+        mode: transcribeMode,
+        targetLanguage: transcribeLanguage,
+        timestamps: transcribeTimestamps,
+        speakerDiarization: transcribeDiarization,
+      });
       setTranscription(result);
     } catch (err: any) {
       setTranscribeError(err.message || 'Failed to transcribe the media file.');
@@ -243,7 +292,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
     }
   };
 
-  // --- Transcribe Recording Handlers ---
+  // --- Transcribe Recording Handlers with Real-Time Timer ---
   const startTranscribeRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -257,11 +306,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(transcribeChunksRef.current, { type: 'audio/webm' });
-        const file = new File([blob], 'recording.webm', { type: 'audio/webm' });
+        const file = new File([blob], `recording-${Date.now()}.webm`, { type: 'audio/webm' });
         setRecordedFile(file);
         setTranscribeRecordState('recorded');
         stream.getTracks().forEach(track => track.stop());
       };
+
+      setRecordingSeconds(0);
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds(prev => prev + 1);
+      }, 1000);
 
       mediaRecorder.start();
       setTranscribeRecordState('recording');
@@ -274,15 +329,107 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
   };
 
   const stopTranscribeRecording = () => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
     if (transcribeRecorderRef.current && transcribeRecorderRef.current.state !== 'inactive') {
       transcribeRecorderRef.current.stop();
     }
   };
 
   const clearTranscribeRecording = () => {
-      setRecordedFile(null);
-      setTranscribeRecordState('idle');
-      setTranscription('');
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    setRecordedFile(null);
+    setRecordingSeconds(0);
+    setTranscribeRecordState('idle');
+    setTranscription('');
+  };
+
+  const togglePreviewPlayback = () => {
+    if (!previewAudioRef.current) return;
+    if (previewIsPlaying) {
+      previewAudioRef.current.pause();
+      setPreviewIsPlaying(false);
+    } else {
+      previewAudioRef.current.play();
+      setPreviewIsPlaying(true);
+    }
+  };
+
+  const handleCopyTranscript = async () => {
+    if (!transcription) return;
+    await navigator.clipboard.writeText(transcription);
+    setCopiedToClipboard(true);
+    setTimeout(() => setCopiedToClipboard(false), 2000);
+  };
+
+  const handleDownloadTranscript = (format: 'txt' | 'srt' | 'md') => {
+    if (!transcription) return;
+    const mimeMap: Record<string, string> = {
+      txt: 'text/plain;charset=utf-8',
+      srt: 'text/plain;charset=utf-8',
+      md: 'text/markdown;charset=utf-8'
+    };
+    const blob = new Blob([transcription], { type: mimeMap[format] });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `speechos-transcript-${Date.now()}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSendToAgentScene = () => {
+    if (!transcription) return;
+    const lines = transcription
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0 && !l.startsWith('#') && !l.match(/^\d+$/) && !l.includes('-->'));
+
+    const parsedTurns: DialogueTurn[] = [];
+    let currentSpeaker: 1 | 2 = 1;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const speaker1Match = line.match(/^(?:Speaker\s*1|Person\s*1|Alpha|Host|Interviewer)[\s*:]+(.*)$/i);
+      const speaker2Match = line.match(/^(?:Speaker\s*2|Person\s*2|Beta|Guest|Interviewee)[\s*:]+(.*)$/i);
+
+      let cleanText = line;
+      let turnSpeaker: 1 | 2 = currentSpeaker;
+
+      if (speaker1Match) {
+        turnSpeaker = 1;
+        cleanText = speaker1Match[1].trim();
+      } else if (speaker2Match) {
+        turnSpeaker = 2;
+        cleanText = speaker2Match[1].trim();
+      } else {
+        turnSpeaker = (i % 2 === 0 ? 1 : 2);
+        cleanText = cleanText.replace(/^\[\d{1,2}:\d{2}(?::\d{2})?\]\s*/, '');
+      }
+
+      if (cleanText.length > 0) {
+        parsedTurns.push({
+          id: `imported-${Date.now()}-${i}`,
+          speaker: turnSpeaker,
+          text: cleanText,
+          emotion: 'Neutral',
+          tempo: 'Normal'
+        });
+        currentSpeaker = turnSpeaker === 1 ? 2 : 1;
+      }
+    }
+
+    if (parsedTurns.length > 0) {
+      setDialogueTurns(parsedTurns);
+      setMode('dialogue');
+    }
   };
 
   // --- Dialogue Handlers ---
@@ -879,96 +1026,183 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
         </div>
       )}
 
-      {/* --- TRANSCRIBE MODE --- */}
+      {/* --- TRANSCRIBE MODE (FULLY UPGRADED PRO WORKSPACE) --- */}
       {mode === 'transcribe' && (
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center justify-between mb-6">
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
+          
+          {/* Header & Source Mode Switcher */}
+          <div className="flex items-center justify-between px-1">
              <label className="text-sm font-semibold text-[#E6EAF0] flex items-center gap-2 uppercase tracking-widest">
                <FileText className="w-4 h-4 text-emerald-400" />
-               Source Input
+               Media Ingestion Engine
              </label>
-             <div className="flex gap-1 bg-[#121317] p-1 rounded-full border border-[rgba(230,234,240,0.06)]">
+             <div className="flex gap-1 bg-[#121317] p-1 rounded-full border border-white/[0.08]">
                 <button 
                   onClick={() => setTranscribeInputMode('upload')} 
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors ${transcribeInputMode === 'upload' ? 'bg-[#2F3034] text-emerald-400 shadow-sm' : 'text-[#B7BFD9] hover:text-white'}`}
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-all ${
+                    transcribeInputMode === 'upload' 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm' 
+                      : 'text-[#B7BFD9] hover:text-white'
+                  }`}
                 >
-                  Upload
+                  <Upload className="w-3.5 h-3.5 inline mr-1.5" />
+                  Upload Media
                 </button>
                 <button 
                   onClick={() => setTranscribeInputMode('record')} 
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors ${transcribeInputMode === 'record' ? 'bg-[#2F3034] text-emerald-400 shadow-sm' : 'text-[#B7BFD9] hover:text-white'}`}
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-all ${
+                    transcribeInputMode === 'record' 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm' 
+                      : 'text-[#B7BFD9] hover:text-white'
+                  }`}
                 >
-                  Record
+                  <Mic className="w-3.5 h-3.5 inline mr-1.5" />
+                  Live Mic
                 </button>
              </div>
           </div>
 
-          <div className="mb-8">
+          {/* Media Input Area */}
+          <div className="bg-[#121317] border border-white/[0.08] rounded-[1.75rem] p-6 shadow-inner">
             {transcribeInputMode === 'upload' ? (
-              <div className="relative group border-2 border-dashed border-[rgba(230,234,240,0.1)] rounded-[1.5rem] p-10 hover:border-emerald-500/50 transition-colors bg-[#212226]/50 flex flex-col items-center justify-center text-center cursor-pointer min-h-[250px]">
-                <input 
-                  type="file" 
-                  accept="audio/*,video/*" 
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      setSelectedFile(e.target.files[0]);
-                      setTranscription('');
-                      setTranscribeError('');
-                    }
-                  }}
-                />
-                <div className="p-5 bg-[#121317] rounded-full mb-5 group-hover:bg-emerald-500/10 transition-colors shadow-inner">
-                   <Upload className="w-8 h-8 text-[#B7BFD9] group-hover:text-emerald-400 transition-colors" />
+              <div className="space-y-4">
+                <div className="relative group border-2 border-dashed border-white/[0.12] hover:border-emerald-500/50 rounded-2xl p-8 transition-all bg-[#18191D]/40 hover:bg-[#18191D]/70 flex flex-col items-center justify-center text-center cursor-pointer min-h-[200px]">
+                  <input 
+                    type="file" 
+                    accept="audio/*,video/*" 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setSelectedFile(e.target.files[0]);
+                        setTranscription('');
+                        setTranscribeError('');
+                      }
+                    }}
+                  />
+                  <div className="p-4 bg-white/[0.04] group-hover:bg-emerald-500/10 rounded-2xl mb-4 group-hover:scale-105 transition-all shadow-inner border border-white/[0.06]">
+                     <Upload className="w-8 h-8 text-[#B7BFD9] group-hover:text-emerald-400 transition-colors" />
+                  </div>
+                  <h4 className="text-white font-medium mb-1.5 truncate max-w-full px-4 text-base">
+                    {selectedFile ? selectedFile.name : 'Drag & drop audio or video file here'}
+                  </h4>
+                  <p className="text-xs text-[#8f929b] font-light">
+                    {selectedFile 
+                      ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB • Ready for processing` 
+                      : 'Accepts MP3, WAV, M4A, FLAC, MP4, WebM (Studio 24kHz ready)'}
+                  </p>
                 </div>
-                <h4 className="text-white font-medium mb-2 truncate max-w-full px-4 text-lg">
-                  {selectedFile ? selectedFile.name : 'Select or drop media file'}
-                </h4>
-                <p className="text-sm text-[#B7BFD9]/70 font-light">
-                  {selectedFile ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB` : 'Supported formats: MP3, WAV, MP4, WebM'}
-                </p>
+
+                {/* Inline Audio Preview Player */}
+                {previewAudioUrl && (
+                  <div className="bg-[#18191D] border border-white/[0.08] rounded-xl p-3.5 flex items-center justify-between gap-4 animate-in fade-in">
+                    <audio 
+                      ref={previewAudioRef} 
+                      src={previewAudioUrl} 
+                      onEnded={() => setPreviewIsPlaying(false)} 
+                      className="hidden" 
+                    />
+                    <div className="flex items-center gap-3 min-w-0">
+                      <button
+                        type="button"
+                        onClick={togglePreviewPlayback}
+                        className="w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black flex items-center justify-center transition-transform active:scale-95 shrink-0 shadow-lg"
+                        title={previewIsPlaying ? "Pause preview" : "Play preview audio"}
+                      >
+                        {previewIsPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+                      </button>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-white truncate">
+                          {selectedFile?.name || 'Uploaded Audio'}
+                        </p>
+                        <p className="text-[10px] text-emerald-400 font-mono">
+                          {previewIsPlaying ? "Playing audio preview..." : "Click to inspect audio before transcribe"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setPreviewAudioUrl(null);
+                        setTranscription('');
+                      }}
+                      className="text-xs text-[#FC413D]/70 hover:text-[#FC413D] px-2.5 py-1 rounded-lg hover:bg-[#FC413D]/10 transition-colors shrink-0"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="border-2 border-dashed border-[rgba(230,234,240,0.1)] rounded-[1.5rem] p-10 bg-[#212226]/50 flex flex-col items-center justify-center text-center min-h-[250px]">
+              <div className="border border-white/[0.08] rounded-2xl p-8 bg-[#18191D]/40 flex flex-col items-center justify-center text-center min-h-[220px]">
                 {transcribeRecordState === 'idle' && (
                   <div className="flex flex-col items-center">
                     <button 
                       onClick={startTranscribeRecording} 
-                      className="w-24 h-24 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(5,150,105,0.3)] transition-all hover:scale-105 mb-6"
+                      className="w-20 h-20 bg-emerald-500 hover:bg-emerald-400 text-black rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.35)] transition-all hover:scale-105 active:scale-95 mb-4 group"
                     >
-                      <Mic className="w-10 h-10" />
+                      <Mic className="w-8 h-8 group-hover:scale-110 transition-transform" />
                     </button>
-                    <p className="text-white font-medium text-lg">Initialize Recording</p>
-                    <p className="text-sm text-[#B7BFD9]/70 mt-1 font-light">Verify microphone connection</p>
+                    <p className="text-white font-semibold text-base">Record Voice Memo</p>
+                    <p className="text-xs text-[#8f929b] mt-1 font-light">Direct stream capture via Web Audio</p>
                   </div>
                 )}
                 
                 {transcribeRecordState === 'recording' && (
                   <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-2 mb-3 px-3 py-1 rounded-full bg-[#FC413D]/10 border border-[#FC413D]/30 text-[#FC413D] text-xs font-mono font-bold animate-pulse">
+                      <span className="w-2 h-2 rounded-full bg-[#FC413D]" />
+                      LIVE RECORDING • {Math.floor(recordingSeconds / 60).toString().padStart(2, '0')}:{(recordingSeconds % 60).toString().padStart(2, '0')}
+                    </div>
+
                     <button 
                       onClick={stopTranscribeRecording} 
-                      className="w-24 h-24 bg-[#121317] border-2 border-[#FC413D] text-[#FC413D] hover:bg-[#FC413D]/10 rounded-full flex items-center justify-center transition-all animate-pulse mb-6"
+                      className="w-20 h-20 bg-[#121317] border-2 border-[#FC413D] text-[#FC413D] hover:bg-[#FC413D]/10 rounded-full flex items-center justify-center transition-all animate-pulse shadow-[0_0_30px_rgba(252,65,61,0.3)] mb-4"
+                      title="Stop recording"
                     >
-                      <Square className="w-8 h-8 fill-current" />
+                      <Square className="w-7 h-7 fill-current" />
                     </button>
-                    <p className="text-[#FC413D] font-medium text-lg animate-pulse">Capturing Audio...</p>
-                    <p className="text-sm text-[#B7BFD9]/70 mt-1 font-light">Click to terminate</p>
+                    <p className="text-[#FC413D] font-medium text-sm">Tap square to complete capture</p>
                   </div>
                 )}
 
                 {transcribeRecordState === 'recorded' && (
-                  <div className="flex flex-col items-center animate-in zoom-in-95 duration-200">
-                    <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mb-5">
-                       <Activity className="w-10 h-10 text-emerald-400" />
+                  <div className="flex flex-col items-center animate-in zoom-in-95 duration-200 w-full max-w-sm">
+                    <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mb-3">
+                       <Activity className="w-7 h-7 text-emerald-400" />
                     </div>
-                    <p className="text-emerald-400 font-medium text-xl">Audio Stored</p>
-                    <p className="text-sm text-[#B7BFD9] mt-1 mb-8 font-light">Ready for transcription protocol</p>
+                    <p className="text-white font-semibold text-base">Audio Recorded</p>
+                    <p className="text-xs text-[#8f929b] mt-0.5 mb-4">
+                      Captured session ({Math.floor(recordingSeconds / 60)}m {recordingSeconds % 60}s)
+                    </p>
+
+                    {previewAudioUrl && (
+                      <div className="w-full bg-[#121317] border border-white/[0.08] rounded-xl p-3 flex items-center justify-between gap-3 mb-4">
+                        <audio 
+                          ref={previewAudioRef} 
+                          src={previewAudioUrl} 
+                          onEnded={() => setPreviewIsPlaying(false)} 
+                          className="hidden" 
+                        />
+                        <button
+                          type="button"
+                          onClick={togglePreviewPlayback}
+                          className="w-9 h-9 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black flex items-center justify-center transition-transform active:scale-95 shrink-0"
+                        >
+                          {previewIsPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+                        </button>
+                        <span className="text-xs text-[#B7BFD9] font-mono truncate flex-1 text-left">
+                          {previewIsPlaying ? "Playing recorded audio..." : "Listen to recording"}
+                        </span>
+                      </div>
+                    )}
                     
                     <button 
                       onClick={clearTranscribeRecording} 
-                      className="text-sm font-semibold text-[#FC413D]/80 hover:text-[#FC413D] hover:bg-[#FC413D]/10 px-5 py-2.5 rounded-full transition-colors"
+                      className="text-xs font-semibold text-[#FC413D]/80 hover:text-[#FC413D] hover:bg-[#FC413D]/10 px-4 py-2 rounded-full transition-colors"
                     >
-                      Discard & Re-initialize
+                      Discard & Record Again
                     </button>
                   </div>
                 )}
@@ -976,23 +1210,193 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ onGenerateSingle, onGenerat
             )}
             
             {transcribeError && (
-              <p className="mt-4 text-sm font-medium text-[#FC413D] flex items-center gap-1.5"><X className="w-4 h-4"/> {transcribeError}</p>
+              <div className="mt-4 p-3 bg-[#FC413D]/10 border border-[#FC413D]/30 rounded-xl text-xs font-medium text-[#FC413D] flex items-center gap-2">
+                <X className="w-4 h-4 shrink-0" />
+                <span>{transcribeError}</span>
+              </div>
             )}
           </div>
 
+          {/* Engine Parameters Suite */}
+          <div className="bg-[#121317] border border-white/[0.08] rounded-[1.75rem] p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#A8ABB3] uppercase tracking-wider flex items-center gap-2">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-400" />
+                Output Configuration
+              </span>
+              <span className="text-[10px] text-[#6d717b] uppercase font-mono">Gemini 3 Multimodal</span>
+            </div>
+
+            {/* Mode selection pills */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { id: 'verbatim', label: 'Verbatim Forensic', desc: 'Exact timestamps & sound FX' },
+                { id: 'clean', label: 'Clean Editorial', desc: 'No stutter, filler words or um' },
+                { id: 'summary', label: 'Executive Summary', desc: 'Key takeaways & action items' },
+                { id: 'srt', label: 'Subtitle Track (.SRT)', desc: 'Broadcast ready captions' },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setTranscribeMode(m.id as TranscribeMode)}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    transcribeMode === m.id
+                      ? 'bg-emerald-500/10 border-emerald-500/50 text-white shadow-sm'
+                      : 'bg-[#18191D]/40 border-white/[0.06] text-[#8f929b] hover:text-white hover:bg-[#18191D]'
+                  }`}
+                >
+                  <p className={`text-xs font-bold ${transcribeMode === m.id ? 'text-emerald-400' : 'text-white'}`}>
+                    {m.label}
+                  </p>
+                  <p className="text-[10px] text-[#8f929b] mt-0.5 leading-snug">{m.desc}</p>
+                </button>
+              ))}
+            </div>
+
+            {/* Language & Diarization toggles */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-white/[0.06]">
+              {/* Language Selector */}
+              <div className="bg-[#18191D]/60 border border-white/[0.06] p-2.5 rounded-xl flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-[#8f929b] flex items-center gap-1.5">
+                  <Languages className="w-3.5 h-3.5 text-cyan-400" />
+                  Language
+                </label>
+                <select
+                  value={transcribeLanguage}
+                  onChange={(e) => setTranscribeLanguage(e.target.value as any)}
+                  className="bg-[#121317] border border-white/10 text-xs text-white rounded-lg px-2.5 py-1 outline-none cursor-pointer"
+                >
+                  <option value="auto">Auto Detect</option>
+                  <option value="nl">Nederlands (NL)</option>
+                  <option value="en">English (EN)</option>
+                </select>
+              </div>
+
+              {/* Timestamps toggle */}
+              <button
+                type="button"
+                onClick={() => setTranscribeTimestamps(!transcribeTimestamps)}
+                className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${
+                  transcribeTimestamps
+                    ? 'bg-white/[0.06] border-white/20 text-white'
+                    : 'bg-[#18191D]/40 border-white/[0.06] text-[#8f929b]'
+                }`}
+              >
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                  Include Timestamps
+                </span>
+                <span className={`w-3.5 h-3.5 rounded flex items-center justify-center text-[10px] ${
+                  transcribeTimestamps ? 'bg-indigo-500 text-white' : 'bg-white/10 text-transparent'
+                }`}>✓</span>
+              </button>
+
+              {/* Diarization toggle */}
+              <button
+                type="button"
+                onClick={() => setTranscribeDiarization(!transcribeDiarization)}
+                className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-all ${
+                  transcribeDiarization
+                    ? 'bg-white/[0.06] border-white/20 text-white'
+                    : 'bg-[#18191D]/40 border-white/[0.06] text-[#8f929b]'
+                }`}
+              >
+                <span className="flex items-center gap-1.5 font-medium">
+                  <User className="w-3.5 h-3.5 text-amber-400" />
+                  Speaker Diarization
+                </span>
+                <span className={`w-3.5 h-3.5 rounded flex items-center justify-center text-[10px] ${
+                  transcribeDiarization ? 'bg-amber-500 text-black font-bold' : 'bg-white/10 text-transparent'
+                }`}>✓</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Extracted Data & Pro Export Suite */}
           {transcription && (
-            <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <label className="block text-sm font-semibold text-[#E6EAF0] mb-3 flex items-center gap-2 uppercase tracking-widest">
-                <FileText className="w-4 h-4 text-emerald-400" />
-                Extracted Data
-              </label>
+            <div className="bg-[#121317] border border-white/[0.08] rounded-[1.75rem] p-6 space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
+              {/* Stats & Title Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-t-0 border-b border-white/[0.06]">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-white">
+                    Extraction Output
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                    {transcribeMode.toUpperCase()}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 text-xs font-mono text-[#8f929b]">
+                  <span>{transcription.trim().split(/\s+/).filter(Boolean).length} words</span>
+                  <span>•</span>
+                  <span>~{Math.max(1, Math.ceil(transcription.trim().split(/\s+/).filter(Boolean).length / 180))} min read</span>
+                  <span>•</span>
+                  <span>{transcription.length} chars</span>
+                </div>
+              </div>
+
+              {/* Action Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    onClick={handleCopyTranscript}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.1] text-white border border-white/[0.08] transition-all"
+                  >
+                    {copiedToClipboard ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-[#B7BFD9]" />}
+                    {copiedToClipboard ? 'Copied!' : 'Copy'}
+                  </button>
+
+                  <button
+                    onClick={() => handleDownloadTranscript('txt')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.1] text-[#B7BFD9] hover:text-white border border-white/[0.08] transition-all"
+                    title="Download as plain text file"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    .TXT
+                  </button>
+
+                  <button
+                    onClick={() => handleDownloadTranscript('srt')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.1] text-[#B7BFD9] hover:text-white border border-white/[0.08] transition-all"
+                    title="Download as subtitle (.srt)"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    .SRT
+                  </button>
+
+                  <button
+                    onClick={() => handleDownloadTranscript('md')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.1] text-[#B7BFD9] hover:text-white border border-white/[0.08] transition-all"
+                    title="Download as Markdown report"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    .MD
+                  </button>
+                </div>
+
+                {/* Instant Send to Agent Scene Feature */}
+                <button
+                  type="button"
+                  onClick={handleSendToAgentScene}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 hover:text-white border border-indigo-500/40 transition-all shadow-sm"
+                  title="Send transcript dialogue into Agent Scene to re-synthesize with voice personas"
+                >
+                  <Wand2 className="w-3.5 h-3.5 text-indigo-400" />
+                  Load into Agent Scene ⚡
+                </button>
+              </div>
+
+              {/* Editable / Formatted Transcript Area */}
               <textarea
-                readOnly
                 value={transcription}
-                className="w-full h-56 bg-[#121317] border border-[rgba(230,234,240,0.1)] rounded-[1.5rem] p-6 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500/50 resize-none font-light leading-relaxed scrollbar-thin scrollbar-thumb-[#45474D] text-base"
+                onChange={(e) => setTranscription(e.target.value)}
+                className="w-full h-72 bg-[#18191D] border border-white/[0.08] rounded-2xl p-5 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500/50 resize-y font-mono text-xs sm:text-sm leading-relaxed scrollbar-thin scrollbar-thumb-[#45474D]"
+                placeholder="Transcribed text will appear here..."
               />
             </div>
           )}
+
         </div>
       )}
 
